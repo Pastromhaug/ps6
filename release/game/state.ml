@@ -1,6 +1,6 @@
 (* State.ml *)
 (* see state.mli for documentation *)
-(* open Definitions *)
+open Definitions
 
 type t = 
     Init 
@@ -13,20 +13,25 @@ type t =
   | Tie
 
 let state = ref Init
+let mon_lst = ref []
+let move_lst = ref []
+
 let update_state next_data =
   let extract_hp (x : steammon) : int = x.curr_hp in
   let fold_help (a : bool) (x : int) : bool = a || (x > 0) in
+  let red_picks = ref Constants.cNUM_PICKS in
+  let blue_picks = ref Constants.cNUM_PICKS in
   match (!state, next_data) with
   | (Init, _) -> 
       if (Random.int 99) < 50 then state := (Draft Red)
       else state := (Draft Blue)
-  | (Draft _, ((_, _, 0), (_, _, 0))) ->
-      state := Buy
-  | (Draft Red, ((_, _, red_cred), (_, _, blue_cred))) ->
-      if red_cred >= blue_cred then ()
+  | (Draft Red, _) -> 
+      if (!red_picks = 0 && !blue_picks = 0) then state := Buy
+      else if !red_picks >= !blue_picks then ()
       else state := (Draft Blue)
-  | (Draft Blue, ((_, _, red_cred), (_, _, blue_cred))) ->
-      if blue_cred >= red_cred then ()
+  | (Draft Blue, _) ->
+      if (!blue_picks = 0 && !red_picks = 0) then state := Buy
+      else if !blue_picks >= !red_picks then ()
       else state := (Draft Red)
   | (Buy, _) ->
       state := BattleInit
@@ -53,3 +58,48 @@ let update_state next_data =
   | (Win Red, _)
   | (Win Blue, _)
   | (Tie, _) -> ()
+
+let state_to_commands next_data =
+  match !state with
+  | Init -> 
+      failwith "State error"
+  | Draft Red -> 
+      (Request(PickRequest(Red,next_data,!(State.move_lst),!(State.mon_lst))), 
+       DoNothing)
+  | Draft Blue -> 
+      (DoNothing, 
+       Request(PickRequest(Blue,next_data,!(State.move_lst),!(State.mon_lst))))
+  | Buy -> 
+      (Request (PickInventoryRequest next_data), 
+       Request (PickInventoryRequest next_data))
+  | BattleInit ->
+      (Request (StarterRequest next_data), 
+       Request (StarterRequest next_data))
+  | Battle ->
+      (Request (ActionRequest next_data),
+       Request (ActionRequest next_data))
+  | Faint Red ->
+      (Request (StarterRequest next_data),
+       DoNothing)
+  | Faint Blue ->
+      (DoNothing,
+       Request (StarterRequest next_data))
+  | Win Red
+  | Win Blue
+  | Tie ->
+      (DoNothing,
+       DoNothing)
+
+let state_to_result () =
+  match !state with
+  | Init
+  | Draft Red
+  | Draft Blue
+  | Buy
+  | BattleInit
+  | Battle
+  | Faint Red
+  | Faint Blue -> None
+  | Win Red -> Some (Winner Red)
+  | Win Blue -> Some (Winner Blue)
+  | Tie -> Some Tie
