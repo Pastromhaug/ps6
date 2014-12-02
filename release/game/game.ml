@@ -35,22 +35,28 @@ let find_next_data (g : game) (ra : command) (ba : command) :
   let find_cost a x y = a + (x * y) in
   match (fst g, (ra, ba)) with
   | (Init, (Action (SendTeamName stra), Action (SendTeamName strb))) ->
+      send_update (InitGraphics (stra, strb));
       curr_data
   | (Init, (_, Action (SendTeamName strb))) ->
+      send_update (InitGraphics ("Red", strb));
       curr_data
   | (Init, (Action (SendTeamName stra), _)) ->
+      send_update (InitGraphics (stra, "Blue"));
       curr_data
   | (Init, (_, _)) -> 
+      send_update (InitGraphics ("Red", "Blue"));
       curr_data
   | (Draft Red, (Action (PickSteammon stra), _)) -> 
       let sa = Table.find Initialization.mon_table stra in
       let s = if List.mem sa !(State.mon_lst) && r_cred - sa.cost >= 0 then sa
               else find_cheapest !(State.mon_lst) in
       State.mon_lst := List.filter ((<>) s) !(State.mon_lst);
+      add_update (UpdateSteammon (s.species, s.curr_hp, s.max_hp, Red));
       if r_cred - s.cost >= 0 then ((s::r_sl, r_inv, r_cred - s.cost), bdata)
       else ((s::r_sl, r_inv, 0), bdata)
   | (Draft Red, (_, _)) -> 
       let s = find_cheapest !(State.mon_lst) in
+      add_update (UpdateSteammon (s.species, s.curr_hp, s.max_hp, Red));
       if r_cred - s.cost >= 0 then ((s::r_sl, r_inv, r_cred - s.cost), bdata)
       else ((s::r_sl, r_inv, 0), bdata)
   | (Draft Blue, (_, Action (PickSteammon strb))) ->
@@ -58,10 +64,12 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let s = if List.mem sb !(State.mon_lst) && b_cred - sb.cost >= 0 then sb
               else find_cheapest !(State.mon_lst) in
       State.mon_lst := List.filter ((<>) s) !(State.mon_lst);
+      add_update (UpdateSteammon (s.species, s.curr_hp, s.max_hp, Blue));
       if b_cred - s.cost >= 0 then (rdata, (s::b_sl, b_inv, b_cred - s.cost))
       else (rdata, (s::b_sl, b_inv, 0))
   | (Draft Blue, (_, _)) ->
       let s = find_cheapest !(State.mon_lst) in
+      add_update (UpdateSteammon (s.species, s.curr_hp, s.max_hp, Blue));
       if b_cred - s.cost >= 0 then (rdata, (s::b_sl, b_inv, b_cred - s.cost))
       else (rdata, (s::b_sl, b_inv, 0))
   | (Buy, (Action (PickInventory inv_r'), Action (PickInventory inv_b'))) ->
@@ -94,8 +102,10 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let b_start' = Table.find Initialization.mon_table b_start in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
+      add_update (SetChosenSteammon r_start''.species);
       let b_start'' = if b_start'.curr_hp = 0 then find_awake b_sl
                       else b_start' in
+      add_update (SetChosenSteammon b_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
@@ -103,21 +113,27 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let r_start' = Table.find Initialization.mon_table r_start in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
+      add_update (SetChosenSteammon r_start''.species);
       let b_start'' = find_awake b_sl in
+      add_update (SetChosenSteammon b_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
   | (BattleInit, (_, Action (SelectStarter b_start))) ->
       let b_start' = Table.find Initialization.mon_table b_start in
       let r_start'' = find_awake r_sl in
+      add_update (SetChosenSteammon r_start''.species);
       let b_start'' = if b_start'.curr_hp = 0 then find_awake b_sl
                       else b_start' in
+      add_update (SetChosenSteammon b_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
   | (BattleInit, (_, _)) ->
       let r_start'' = find_awake r_sl in
+      add_update (SetChosenSteammon r_start''.species);
       let b_start'' = find_awake b_sl in
+      add_update (SetChosenSteammon b_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
@@ -147,7 +163,16 @@ let find_next_data (g : game) (ra : command) (ba : command) :
   | (Tie, _) -> 
       failwith "State error in handle_step"
 
-let handle_step g ra ba = failwith "DURR"
+let handle_step g ra ba =
+  let next_data = find_next_data g ra ba in
+  State.update_state next_data;
+  let (ca, cb) = match State.state_to_commands next_data with
+                 | (DoNothing, DoNothing) -> (None, None)
+                 | (DoNothing, y)         -> (None, Some y)
+                 | (x, DoNothing)         -> (Some x, None)
+                 | (x, y)                 -> (Some x, Some y) in
+  let res = State.state_to_result () in
+  (res, next_data, ca, cb)
 
 let init_game () =
   let gs = (!(State.state), (([], [0;0;0;0;0;0;0], cSTEAMMON_CREDITS), 

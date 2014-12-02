@@ -15,24 +15,34 @@ type t =
 let state = ref Init
 let mon_lst = ref []
 let move_lst = ref []
+let red_picks = ref Constants.cNUM_PICKS
+let blue_picks = ref Constants.cNUM_PICKS
 
 let update_state next_data =
   let extract_hp (x : steammon) : int = x.curr_hp in
   let fold_help (a : bool) (x : int) : bool = a || (x > 0) in
-  let red_picks = ref Constants.cNUM_PICKS in
-  let blue_picks = ref Constants.cNUM_PICKS in
   match (!state, next_data) with
   | (Init, _) -> 
       if (Random.int 99) < 50 then state := (Draft Red)
       else state := (Draft Blue)
-  | (Draft Red, _) -> 
-      if (!red_picks = 0 && !blue_picks = 0) then state := Buy
+  | (Draft Red, _) ->
+      red_picks := !red_picks - 1;
+      if !red_picks = 0 && !blue_picks = 0 then state := Buy
       else if !red_picks >= !blue_picks then ()
       else state := (Draft Blue)
+
+      (* if (!red_picks = 0 && !blue_picks = 0) then state := Buy
+      else if !red_picks >= !blue_picks then red_picks := !red_picks - 1
+      else state := (Draft Blue) *)
   | (Draft Blue, _) ->
-      if (!blue_picks = 0 && !red_picks = 0) then state := Buy
+      blue_picks := !blue_picks -1;
+      if !red_picks = 0 && !blue_picks = 0 then state := Buy
       else if !blue_picks >= !red_picks then ()
       else state := (Draft Red)
+
+      (* if (!blue_picks = 0 && !red_picks = 0) then state := Buy
+      else if !blue_picks >= !red_picks then blue_picks := !blue_picks - 1
+      else state := (Draft Red) *)
   | (Buy, _) ->
       state := BattleInit
   | (BattleInit, _) ->
