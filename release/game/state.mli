@@ -2,7 +2,14 @@
 open Definitions
 
 (* type of state *)
-type t
+type t = Init 
+       | Draft of color 
+       | Buy 
+       | BattleInit 
+       | Battle 
+       | Faint of color 
+       | Win of color 
+       | Tie
 
 (* pointer to a state *)
 val state : t ref
