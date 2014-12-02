@@ -8,10 +8,10 @@ type t
 val state : t ref
 
 (* pointer to a list of moves *)
-val move_lst : 'a list ref
+val move_lst : move_set ref
 
 (* pointer to a list of steammon *)
-val mon_lst : 'a list ref
+val mon_lst : steam_pool ref
 
 (* updates state based on game_status_data and current state
  * requires : current game_status_data *)

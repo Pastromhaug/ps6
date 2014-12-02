@@ -64,11 +64,11 @@ let state_to_commands next_data =
   | Init -> 
       failwith "State error"
   | Draft Red -> 
-      (Request(PickRequest(Red,next_data,!(State.move_lst),!(State.mon_lst))), 
+      (Request(PickRequest(Red,next_data,!(move_lst),!(mon_lst))), 
        DoNothing)
   | Draft Blue -> 
       (DoNothing, 
-       Request(PickRequest(Blue,next_data,!(State.move_lst),!(State.mon_lst))))
+       Request(PickRequest(Blue,next_data,!(move_lst),!(mon_lst))))
   | Buy -> 
       (Request (PickInventoryRequest next_data), 
        Request (PickInventoryRequest next_data))
