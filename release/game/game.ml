@@ -86,6 +86,91 @@ let determine_order (sd : status_data) (r_act : command) (b_act : command) :
   else (add_update (SetFirstAttacker Blue); 
        ((Blue, b_act), (Red, r_act)))
 
+let do_action (sd : status_data) (col : color) (act : action) : status_data =
+  let sl = match col with
+           | Red -> fst (fst sd)
+           | Blue -> fst (snd sd) in
+  match act with
+  | Action (SwitchSteammon str) -> begin
+      let s = List.fold_left (fun a x -> if x.species = str then x 
+                                         else a) (find_awake sl) sl in
+      sl' = s :: (List.filter ((<>) s) sl) in
+      add_update (SetChosenSteammon s.species);
+      match col with
+      | Red -> ((sl, snd (fst sd)), snd sd)
+      | Blue -> (fst sd, (sl, snd (snd sd))) end
+  | Action (UseItem (itm, str)) -> begin
+      let item_pp (s : steammon) : steammon =
+        let add_pp (m : move) : move = 
+          {name = m.name; element = m.element; target = m.target;
+           max_pp = m.max_pp; pp_remaining = min m.max_pp (m.pp_remaining + 5);
+           power = m.power; accuracy = m.accuracy; effects = m.effects} in
+        let first_move' = add_pp first_move in
+        let second_move' = add_pp second_move in
+        let third_move' = add_pp third_move in
+        let fourth_move' = add_pp fourth_move in
+        {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
+         first_type = s.first_type; second_type = s.second_type;
+         first_move = first_move'; second_move = second_move';
+         third_move = third_move'; fourth_move = fourth_move';
+         attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+         spl_defense = s.spl_defense; speed = s.speed; status = s.status;
+         mods = s.mods; cost = s.cost} in
+      let item_hp (s : steammon) (n : int) : steammon =
+        {species = s.species; curr_hp = n; max_hp = s.max_hp; 
+         first_type = s.first_type; second_type = s.second_type;
+         first_move = s.first_move; second_move = s.second_move;
+         third_move = s.third_move; fourth_move = s.fourth_move;
+         attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+         spl_defense = s.spl_defense; speed = s.speed; status = s.status;
+         mods = s.mods; cost = s.cost} in
+      let item_status (s : steammon) : steammon = 
+        {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
+         first_type = s.first_type; second_type = s.second_type;
+         first_move = s.first_move; second_move = s.second_move;
+         third_move = s.third_move; fourth_move = s.fourth_move;
+         attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+         spl_defense = s.spl_defense; speed = s.speed; status = None;
+         mods = s.mods; cost = s.cost} in
+      let item_mods (s : steammon) (st : stat) : steammon = 
+        let mods' = s.mods in
+        let mods'' = match st with
+                    | SpA
+                    | SpD -> failwith "shouldn't be raised"
+                    | Atk -> {attack_mod = mods'.attack_mod + 1;
+                              defense_mod = mods'.defense_mod;
+                              spl_attack_mod = mods'.spl_attack_mod;
+                              spl_defense_mod = mods'.spl_defense_mod;
+                              speed_mod = mods'.speed_mod}
+                    | Def -> {attack_mod = mods'.attack_mod;
+                              defense_mod = mods'.defense_mod + 1;
+                              spl_attack_mod = mods'.spl_attack_mod;
+                              spl_defense_mod = mods'.spl_defense_mod;
+                              speed_mod = mods'.speed_mod}
+                    | Spe -> {attack_mod = mods'.attack_mod;
+                              defense_mod = mods'.defense_mod;
+                              spl_attack_mod = mods'.spl_attack_mod;
+                              spl_defense_mod = mods'.spl_defense_mod;
+                              speed_mod = mods'.speed_mod + 1} in
+        {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
+         first_type = s.first_type; second_type = s.second_type;
+         first_move = s.first_move; second_move = s.second_move;
+         third_move = s.third_move; fourth_move = s.fourth_move;
+         attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+         spl_defense = s.spl_defense; speed = s.speed; status = s.status;
+         mods = mods''; cost = s.cost} in
+        match itm with
+        | Ether -> failwith "TODO"
+        | MaxPotion -> failwith "TODO"
+        | Revive -> failwith "TODO"
+        | FullHeal -> failwith "TODO"
+        | XAttack -> failwith "TODO"
+        | XDefense -> failwith "TODO"
+        | XSpeed -> failwith "TODO"
+  end
+  | Action (UseMove str) -> failwith "TODO"
+  | _ -> sd
+
 let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
     game_status_data =
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = gsd in
@@ -174,8 +259,10 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       ((r_sl, def_inv, r_cred), (b_sl, def_inv, b_cred))
   | (BattleInit, (Action (SelectStarter r_start), 
                  Action (SelectStarter b_start))) -> 
-      let r_start' = Table.find Initialization.mon_table r_start in
-      let b_start' = Table.find Initialization.mon_table b_start in
+      let r_start' = List.fold_left (fun a x -> if x.species = r_start then x 
+                                           else a) (find_awake r_sl) r_sl in
+      let b_start' = List.fold_left (fun a x -> if x.species = b_start then x
+                                           else a) (find_awake b_sl) b_sl in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
       add_update (SetChosenSteammon r_start''.species);
@@ -186,7 +273,8 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
   | (BattleInit, (Action (SelectStarter r_start), _)) ->
-      let r_start' = Table.find Initialization.mon_table r_start in
+      let r_start' = List.fold_left (fun a x -> if x.species = r_start then x 
+                                           else a) (find_awake r_sl) r_sl in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
       add_update (SetChosenSteammon r_start''.species);
@@ -196,7 +284,8 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
   | (BattleInit, (_, Action (SelectStarter b_start))) ->
-      let b_start' = Table.find Initialization.mon_table b_start in
+      let b_start' = List.fold_left (fun a x -> if x.species = b_start then x
+                                           else a) (find_awake b_sl) b_sl in
       let r_start'' = find_awake r_sl in
       add_update (SetChosenSteammon r_start''.species);
       let b_start'' = if b_start'.curr_hp = 0 then find_awake b_sl
@@ -215,7 +304,8 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
   | (Battle, (x, y)) -> do_battle curr_data x y
   | (Faint Red, (Action (SelectStarter r_start), _)) ->
-      let r_start' = Table.find Initialization.mon_table r_start in
+      let r_start' = List.fold_left (fun a x -> if x.species = r_start then x 
+                                           else a) (find_awake r_sl) r_sl in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
@@ -225,7 +315,8 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       ((r_sl', r_inv, r_cred), bdata)
   | (Faint Blue, (_, Action (SelectStarter b_start))) -> 
-      let b_start' = Table.find Initialization.mon_table b_start in
+      let b_start' = List.fold_left (fun a x -> if x.species = b_start then x
+                                           else a) (find_awake b_sl) b_sl in
       let b_start'' = if b_start'.curr_hp = 0 then find_awake b_sl
                       else b_start' in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
