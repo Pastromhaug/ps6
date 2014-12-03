@@ -23,6 +23,82 @@ let find_awake (lst : steammon list) : steammon =
     | h::_ -> h in
   List.fold_left (fun a x -> if x.curr_hp > a.curr_hp then x else a) first lst
 
+type status_data = (steammon list * inventory) * (steammon list * inventory)
+
+let initial_effects (sd : status_data) : status_data =
+  let r_sl = fst (fst sd) in
+  let b_sl = fst (snd sd) in
+  match (r_sl, b_sl) with
+  | ([], [])
+  | ([], _)
+  | (_, []) -> failwith "Steammon list error in initial_effects"
+  | (rh::rt, bh::bt) -> 
+  let mod_status (s : steammon) (col : color) : steammon = 
+    let status' = match s.status with
+                  | Some Asleep -> if Random.int 99 < cWAKE_UP_CHANCE then 
+                                     (add_update (AdditionalEffects 
+                                               [(HealedStatus Asleep, col)]); 
+                                     None)
+                                   else Some Asleep
+                  | Some Frozen -> if Random.int 99 < cDEFROST_CHANCE then 
+                                     (add_update (AdditionalEffects
+                                               [(HealedStatus Frozen, col)]);
+                                     None)
+                                   else Some Frozen
+                  | Some Confused -> if Random.int 99 < cSNAP_OUT_OF_CONFUSION
+                                       then (add_update (AdditionalEffects
+                                               [(HealedStatus Confused, col)]); 
+                                       None)
+                                     else Some Confused
+                  | x -> x in
+    {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
+     first_type = s.first_type; second_type = s.second_type;
+     first_move = s.first_move; second_move = s.second_move;
+     third_move = s.third_move; fourth_move = s.fourth_move;
+     attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+     spl_defense = s.spl_defense; speed = s.speed; status = status';
+     mods = s.mods; cost = s.cost} in
+  let r_sl = (mod_status rh Red) :: rt in
+  let b_sl = (mod_status bh Blue) :: bt in
+  ((r_sl, snd(fst sd)),(b_sl, snd(snd sd)))
+
+let determine_order (sd : status_data) (r_act : command) (b_act : command) :
+    (color * command) * (color * command) =
+  match (fst (fst sd), fst (snd sd)) with
+  | ([], [])
+  | ([], _)
+  | (_, []) -> failwith "Steammon list error in determine_order"
+  | (rh::_, bh::_) ->
+  let true_speed (s : steammon) : float =
+    let slow_factor = match s.status with
+                      | Some Paralyzed -> float_of_int cPARALYSIS_SLOW
+                      | _ -> 1. in
+    (float_of_int s.speed) *. 
+    (multiplier_of_modifier (s.mods).speed_mod) /.
+    slow_factor in
+  if (true_speed rh) > (true_speed bh) then (add_update (SetFirstAttacker Red);
+                                            ((Red, r_act), (Blue, b_act)))
+  else if (true_speed rh) < (true_speed bh) then (
+                                            add_update (SetFirstAttacker Blue);
+                                            ((Blue, b_act), (Red, r_act)))
+  else if Random.int 99 < 50 then (add_update (SetFirstAttacker Red);
+                                  ((Red, r_act), (Blue, b_act)))
+  else (add_update (SetFirstAttacker Blue); 
+       ((Blue, b_act), (Red, r_act)))
+
+let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
+    game_status_data =
+  let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = gsd in
+  let sd = ((r_sl, r_inv), (b_sl, b_inv)) in
+  let sd = initial_effects sd in
+  let ((first, act1), (second, act2)) = determine_order sd r_act b_act in
+  let sd = do_action sd first act1 in
+  let sd = do_action sd second act2 in
+  let sd = after_effects sd in
+  ignore first; ignore second; ignore act1; ignore act2;
+  let ((r_sl, r_inv), (b_sl, b_inv)) = sd in
+  ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred))
+
 let find_next_data (g : game) (ra : command) (ba : command) : 
     game_status_data =
   let curr_data = snd g in
@@ -137,7 +213,7 @@ let find_next_data (g : game) (ra : command) (ba : command) :
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       ((r_sl', r_inv, r_cred), (b_sl', b_inv, b_cred))
-  | (Battle, _) -> failwith "BECAUSE PER MADE ME DO THIS"
+  | (Battle, (x, y)) -> do_battle curr_data x y
   | (Faint Red, (Action (SelectStarter r_start), _)) ->
       let r_start' = Table.find Initialization.mon_table r_start in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl

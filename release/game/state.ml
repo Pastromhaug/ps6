@@ -30,19 +30,11 @@ let update_state next_data =
       if !red_picks = 0 && !blue_picks = 0 then state := Buy
       else if !red_picks >= !blue_picks then ()
       else state := (Draft Blue)
-
-      (* if (!red_picks = 0 && !blue_picks = 0) then state := Buy
-      else if !red_picks >= !blue_picks then red_picks := !red_picks - 1
-      else state := (Draft Blue) *)
   | (Draft Blue, _) ->
       blue_picks := !blue_picks -1;
       if !red_picks = 0 && !blue_picks = 0 then state := Buy
       else if !blue_picks >= !red_picks then ()
       else state := (Draft Red)
-
-      (* if (!blue_picks = 0 && !red_picks = 0) then state := Buy
-      else if !blue_picks >= !red_picks then blue_picks := !blue_picks - 1
-      else state := (Draft Red) *)
   | (Buy, _) ->
       state := BattleInit
   | (BattleInit, _) ->
