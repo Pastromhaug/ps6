@@ -86,7 +86,7 @@ let determine_order (sd : status_data) (r_act : command) (b_act : command) :
   else (add_update (SetFirstAttacker Blue); 
        ((Blue, b_act), (Red, r_act)))
 
-let do_action (sd : status_data) (col : color) (act : action) : status_data =
+let do_action (sd : status_data) (col : color) (act : command) : status_data =
   let sl = match col with
            | Red -> fst (fst sd)
            | Blue -> fst (snd sd) in
@@ -94,21 +94,21 @@ let do_action (sd : status_data) (col : color) (act : action) : status_data =
   | Action (SwitchSteammon str) -> begin
       let s = List.fold_left (fun a x -> if x.species = str then x 
                                          else a) (find_awake sl) sl in
-      sl' = s :: (List.filter ((<>) s) sl) in
+      let sl' = s :: (List.filter ((<>) s) sl) in
       add_update (SetChosenSteammon s.species);
       match col with
-      | Red -> ((sl, snd (fst sd)), snd sd)
-      | Blue -> (fst sd, (sl, snd (snd sd))) end
+      | Red -> ((sl', snd (fst sd)), snd sd)
+      | Blue -> (fst sd, (sl', snd (snd sd))) end
   | Action (UseItem (itm, str)) -> begin
       let item_pp (s : steammon) : steammon =
         let add_pp (m : move) : move = 
           {name = m.name; element = m.element; target = m.target;
            max_pp = m.max_pp; pp_remaining = min m.max_pp (m.pp_remaining + 5);
            power = m.power; accuracy = m.accuracy; effects = m.effects} in
-        let first_move' = add_pp first_move in
-        let second_move' = add_pp second_move in
-        let third_move' = add_pp third_move in
-        let fourth_move' = add_pp fourth_move in
+        let first_move' = add_pp s.first_move in
+        let second_move' = add_pp s.second_move in
+        let third_move' = add_pp s.third_move in
+        let fourth_move' = add_pp s.fourth_move in
         {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
          first_type = s.first_type; second_type = s.second_type;
          first_move = first_move'; second_move = second_move';
@@ -159,17 +159,193 @@ let do_action (sd : status_data) (col : color) (act : action) : status_data =
          attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
          spl_defense = s.spl_defense; speed = s.speed; status = s.status;
          mods = mods''; cost = s.cost} in
-        match itm with
-        | Ether -> failwith "TODO"
-        | MaxPotion -> failwith "TODO"
-        | Revive -> failwith "TODO"
-        | FullHeal -> failwith "TODO"
-        | XAttack -> failwith "TODO"
-        | XDefense -> failwith "TODO"
-        | XSpeed -> failwith "TODO"
+      let (sl, inv) = match col with
+                      | Red -> fst sd
+                      | Blue -> snd sd in
+      let ok_to_use (str : string) (lst : steammon list) : bool = 
+        List.fold_left (fun a x -> a || (x.species = str && x.curr_hp > 0)) 
+                                                                false lst in
+      let exists (str : string) (lst : steammon list) : bool =
+        List.fold_left (fun a x -> a || x.species = str) false lst in
+      let has_status (str: string) (lst : steammon list) : bool =
+        List.fold_left (fun a x -> a || (x.species = str && x.status <> None))
+                                                                false lst in
+      let find_status (str : string) (lst : steammon list) : status option =
+        List.fold_left (fun a x -> match a with
+                                   | Some y -> Some y
+                                   | None -> if x.species = str then x.status
+                                             else None) None lst in
+        
+      let data = match itm with
+      | Ether -> begin match inv with
+                       | x::t when x > 0 && 
+                                   exists str sl &&  
+                                   ok_to_use str sl -> 
+                           let inv' = (x-1)::t in
+                           let sl' = List.map (fun x -> if x.species = str 
+                                                          then item_pp x
+                                                        else x) sl in 
+                           add_update (Item("Ether",(RestoredPP 5), col, str));
+                           (sl', inv')
+                       | x::t when x > 0 && 
+                                   exists str sl && 
+                                   not (ok_to_use str sl) ->
+                           let inv' = (x-1)::t in
+                           (sl, inv')
+                       | _ -> (sl, inv) end
+      | MaxPotion -> begin match inv with
+                           | h::x::t when x > 0 &&
+                                          exists str sl &&
+                                          ok_to_use str sl ->
+                             let inv' = h::(x-1)::t in
+                             let sl' = List.map (fun x -> 
+                                                  if x.species = str
+                                                    then item_hp x x.max_hp
+                                                  else x) sl in
+                             let s = Table.find Initialization.mon_table str in
+                             add_update (Item("MaxPotion",(Recovered s.max_hp),
+                                           col, str));
+                             (sl', inv')
+                           | h::x::t when x > 0 &&
+                                          exists str sl &&
+                                          not (ok_to_use str sl) ->
+                             let inv' = h::(x-1)::t in
+                             (sl, inv')
+                           | _ -> (sl, inv) end
+      | Revive -> begin match inv with
+                        | h1::h2::x::t when x > 0 &&
+                                            exists str sl &&
+                                            not (ok_to_use str sl) -> 
+                             let inv' = h1::h2::(x-1)::t in
+                             let sl' = List.map (fun x -> 
+                                         if x.species = str
+                                         then item_status 
+                                           (item_hp x (x.max_hp/2))
+                                         else x) sl in
+                             let s = Table.find Initialization.mon_table str in
+                             add_update (Item("Revive",(Recovered(s.max_hp/2)),
+                                           col, str));
+                             (sl', inv')
+                        | h1::h2::x::t when x > 0 &&
+                                            exists str sl &&
+                                            ok_to_use str sl ->
+                              let inv' = h1::h2::(x-1)::t in
+                              (sl, inv')
+                        | _ -> (sl, inv) end
+      | FullHeal -> begin match inv with
+                          | h1::h2::h3::x::t when x > 0 &&
+                                                  exists str sl &&
+                                                  ok_to_use str sl &&
+                                                  has_status str sl ->
+                            let sts = match find_status str sl with
+                                      | None -> failwith "Error with FullHeal"
+                                      | Some sts' -> sts' in
+                            let inv' = h1::h2::h3::(x-1)::t in
+                            let sl' = List.map (fun x ->
+                                        if x.species = str
+                                        then item_status x
+                                        else x) sl in
+                            add_update (Item("FullHeal",(HealedStatus sts),
+                                          col, str));
+                            (sl', inv')
+                          | h1::h2::h3::x::t when x > 0 &&
+                                                  exists str sl ->
+                             let inv' = h1::h2::h3::(x-1)::t in
+                             (sl, inv')
+                          | _ -> (sl, inv) end
+      | XAttack -> begin match inv with
+                         | h1::h2::h3::h4::x::t when x > 0 &&
+                                                 exists str sl &&
+                                                 ok_to_use str sl ->
+                           let inv' = h1::h2::h3::h4::(x-1)::t in
+                           let sl' = List.map (fun x ->
+                                       if x.species = str
+                                       then item_mods x Atk
+                                       else x) sl in
+                           add_update (Item("XAttack",StatModified (Atk, 1),
+                                         col, str));
+                           (sl', inv')
+                         | h1::h2::h3::h4::x::t when x > 0 &&
+                                                 exists str sl ->
+                           let inv' = h1::h2::h3::h4::(x-1)::t in
+                           (sl, inv')
+                         | _ -> (sl, inv) end
+      | XDefense -> begin match inv with
+                          | h1::h2::h3::h4::h5::x::t when x > 0 &&
+                                                      exists str sl &&
+                                                      ok_to_use str sl ->
+                            let inv' = h1::h2::h3::h4::h5::(x-1)::t in
+                            let sl' = List.map (fun x ->
+                                        if x.species = str
+                                        then item_mods x Def
+                                        else x) sl in
+                            add_update (Item("XDefense",StatModified (Def, 1),
+                                          col, str));
+                            (sl', inv')
+                          | h1::h2::h3::h4::h5::x::t when x > 0 &&
+                                                      exists str sl ->
+                            let inv' = h1::h2::h3::h4::h5::(x-1)::t in
+                           (sl, inv')
+                          | _ -> (sl, inv) end
+      | XSpeed -> begin match inv with
+                        | h1::h2::h3::h4::h5::h6::x::[] when x > 0 &&
+                                                    exists str sl &&
+                                                    ok_to_use str sl ->
+                          let inv' = h1::h2::h3::h4::h5::h6::(x-1)::[] in
+                          let sl' = List.map (fun x ->
+                                      if x.species = str
+                                      then item_mods x Spe
+                                      else x) sl in
+                          add_update (Item("XSpeed",StatModified (Spe, 1),
+                                        col, str));
+                          (sl', inv')
+                        | h1::h2::h3::h4::h5::h6::x::[] when x > 0 &&
+                                                    exists str sl ->
+                          let inv' = h1::h2::h3::h4::h5::h6::(x-1)::[] in
+                          (sl, inv')
+                        | _ -> (sl, inv) end in      
+      match col with
+      | Red -> (data, snd sd)
+      | Blue -> (fst sd, data)
   end
-  | Action (UseMove str) -> failwith "TODO"
+  | Action (UseMove str) -> 
+
   | _ -> sd
+
+let after_effects (sd : status_data) : status_data =
+  let r_sl = fst (fst sd) in
+  let b_sl = fst (snd sd) in
+  match (r_sl, b_sl) with
+  | ([], [])
+  | ([], _)
+  | (_, []) -> failwith "Steammon list error in after_effects"
+  | (rh::rt, bh::bt) -> 
+  let mod_hp (s : steammon) (col : color) : steammon = 
+    let max_hp = float_of_int s.max_hp in
+    let curr_hp'= match s.status with
+                  | Some Poisoned -> let dmg = min s.curr_hp 
+                                     (int_of_float (max_hp *. cPOISON_DAMAGE))
+                                     in add_update (AdditionalEffects
+                                               [(DamagedByStatus 
+                                                (dmg, Poisoned), col)]); 
+                                     s.curr_hp - dmg
+                  | Some Burned -> let dmg = min s.curr_hp
+                                   (int_of_float (max_hp *. cBURN_DAMAGE))
+                                   in add_update (AdditionalEffects
+                                             [(DamagedByStatus
+                                              (dmg, Burned), col)]);
+                                   s.curr_hp - dmg
+                  | _ -> s.curr_hp in
+    {species = s.species; curr_hp = curr_hp'; max_hp = s.max_hp; 
+     first_type = s.first_type; second_type = s.second_type;
+     first_move = s.first_move; second_move = s.second_move;
+     third_move = s.third_move; fourth_move = s.fourth_move;
+     attack = s.attack; spl_attack = s.spl_attack; defense = s.defense;
+     spl_defense = s.spl_defense; speed = s.speed; status = s.status;
+     mods = s.mods; cost = s.cost} in
+  let r_sl = (mod_hp rh Red) :: rt in
+  let b_sl = (mod_hp bh Blue) :: bt in
+  ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) 
 
 let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
     game_status_data =
