@@ -62,7 +62,8 @@ let initial_effects (sd : status_data) : status_data =
   let b_sl = (mod_status bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) end
 
-let determine_order (sd : status_data) (r_act : command) (b_act : command) : (color * command) * (color * command) =
+let determine_order (sd : status_data) (r_act : command) (b_act : command) : 
+    (color * command) * (color * command) =
   match (fst (fst sd), fst (snd sd)) with
   | ([], [])
   | ([], _)
@@ -131,7 +132,9 @@ let find_target (mov : move) (sts : status option) : target =
                                  else Opponent
   | (Opponent, _) -> Opponent
 
-let fold_effects (col : color) (targ : target) ((a, b) : status_data * (effect_result * color) list) (x : effect): status_data * (effect_result * color) list =
+let fold_effects (col : color) (targ : target) 
+    ((a, b) : status_data * (effect_result * color) list) (x : effect) : 
+    status_data * (effect_result * color) list =
   let (att_l, def_l) = match (col, targ) with
                        | (Red, Opponent) -> (fst(fst a), fst(snd a))
                        | (Red, User) -> (fst(fst a), fst(fst a))
@@ -338,57 +341,58 @@ let move_occurs (mov : move) (targ : target) : bool =
 let dmg_ref = ref 0
 let efft_ref = ref Ineffective
 
-let do_move (sd : status_data) (mov : move) (col : color) (targ : target) : status_data = 
-        let (r_sl, b_sl) = (fst (fst sd), fst (snd sd)) in
-        let (rh, rt, bh, bt) = match (r_sl, b_sl) with
-                               | ([], [])
-                               | ([], _)
-                               | (_, []) -> failwith "do_move list error"
-                               | (rh::rt, bh::bt) -> (rh, rt, bh, bt) in
-        let (attacker, defender) = match (col, targ) with
-                                   | (Red, Opponent) -> (rh, bh)
-                                   | (Blue, Opponent) -> (bh, rh) 
-                                   | (Red, User) -> (rh, rh)
-                                   | (Blue, User) -> (bh, bh) in
-        let stab = if List.mem (Some mov.element) [attacker.first_type;
-                                                   attacker.second_type]
-                   then cSTAB_BONUS
-                   else 1. in
-        let (efft, s_mult) = calculate_type_matchup mov.element 
-                              (defender.first_type, defender.second_type) in
-        let bw = match attacker.status with
-                 | Some Burned -> cBURN_WEAKNESS
-                 | _ -> 1. in
-        let rand = (Random.int(100 - cMIN_DAMAGE_RANGE)) + cMIN_DAMAGE_RANGE in
-        let mult = stab *. s_mult *. bw *. (float_of_int rand) /. 100. in
-        let (atk, def) = if is_special mov.element 
-                         then ((float_of_int attacker.spl_attack) *. 
-                         multiplier_of_modifier(attacker.mods).spl_attack_mod,
-                         (float_of_int defender.spl_defense) *.
-                         multiplier_of_modifier(defender.mods).spl_defense_mod)
-                         else ((float_of_int attacker.attack) *.
-                         multiplier_of_modifier(attacker.mods).attack_mod,
-                         (float_of_int defender.defense) *.
-                         multiplier_of_modifier(defender.mods).defense_mod) in
-        let (atk, def) = (int_of_float atk, int_of_float def) in
-        let pow = mov.power in
-        let dmg = calculate_damage atk def pow mult in
-        dmg_ref := min defender.curr_hp dmg;
-        efft_ref := efft;
-        let def' = {species = defender.species; curr_hp = max (defender.curr_hp - dmg) 0; 
-                    max_hp = defender.max_hp; first_type = defender.first_type; 
-                    second_type = defender.second_type; first_move = defender.first_move; 
-                    second_move = defender.second_move; third_move = defender.third_move; 
-                    fourth_move = defender.fourth_move; attack = defender.attack; 
-                    spl_attack = defender.spl_attack; defense = defender.spl_defense; 
-                    spl_defense = defender.spl_defense; speed = defender.spl_defense; 
-                    status = defender.status; mods = defender.mods; cost = defender.cost} in
-        let sd = match (col, targ) with
-                 | (Red, Opponent)
-                 | (Blue, User) -> (fst sd, (def'::bt, snd (snd sd)))
-                 | (Red, User) 
-                 | (Blue, Opponent) ->  ((def'::rt, snd (fst sd)), snd sd) in
-        sd
+let do_move (sd : status_data) (mov : move) (col : color) (targ : target) : 
+    status_data = 
+  let (r_sl, b_sl) = (fst (fst sd), fst (snd sd)) in
+  let (rh, rt, bh, bt) = match (r_sl, b_sl) with
+                         | ([], [])
+                         | ([], _)
+                         | (_, []) -> failwith "do_move list error"
+                         | (rh::rt, bh::bt) -> (rh, rt, bh, bt) in
+  let (attacker, defender) = match (col, targ) with
+                             | (Red, Opponent) -> (rh, bh)
+                             | (Blue, Opponent) -> (bh, rh) 
+                             | (Red, User) -> (rh, rh)
+                             | (Blue, User) -> (bh, bh) in
+  let stab = if List.mem (Some mov.element) [attacker.first_type;
+                                             attacker.second_type]
+             then cSTAB_BONUS
+             else 1. in
+  let (efft, s_mult) = calculate_type_matchup mov.element 
+                      (defender.first_type, defender.second_type) in
+  let bw = match attacker.status with
+           | Some Burned -> cBURN_WEAKNESS
+           | _ -> 1. in
+  let rand = (Random.int(100 - cMIN_DAMAGE_RANGE)) + cMIN_DAMAGE_RANGE in
+  let mult = stab *. s_mult *. bw *. (float_of_int rand) /. 100. in
+  let (atk, def) = if is_special mov.element 
+                   then ((float_of_int attacker.spl_attack) *. 
+                   multiplier_of_modifier(attacker.mods).spl_attack_mod,
+                   (float_of_int defender.spl_defense) *.
+                   multiplier_of_modifier(defender.mods).spl_defense_mod)
+                   else ((float_of_int attacker.attack) *.
+                   multiplier_of_modifier(attacker.mods).attack_mod,
+                   (float_of_int defender.defense) *.
+                   multiplier_of_modifier(defender.mods).defense_mod) in
+  let (atk, def) = (int_of_float atk, int_of_float def) in
+  let pow = mov.power in
+  let dmg = calculate_damage atk def pow mult in
+  dmg_ref := min defender.curr_hp dmg;
+  efft_ref := efft;
+  let def' = {species = defender.species; curr_hp = max (defender.curr_hp - dmg) 0; 
+              max_hp = defender.max_hp; first_type = defender.first_type; 
+              second_type = defender.second_type; first_move = defender.first_move; 
+              second_move = defender.second_move; third_move = defender.third_move; 
+              fourth_move = defender.fourth_move; attack = defender.attack; 
+              spl_attack = defender.spl_attack; defense = defender.spl_defense; 
+              spl_defense = defender.spl_defense; speed = defender.spl_defense; 
+              status = defender.status; mods = defender.mods; cost = defender.cost} in
+  let sd = match (col, targ) with
+           | (Red, Opponent)
+           | (Blue, User) -> (fst sd, (def'::bt, snd (snd sd)))
+           | (Red, User) 
+           | (Blue, Opponent) ->  ((def'::rt, snd (fst sd)), snd sd) in
+      sd
 
 let do_action (sd : status_data) (col : color) (act : command) : status_data =
   let sl = match col with
@@ -657,7 +661,7 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
                     | (Blue, Opponent) -> Red in
       let sd = if move_occurs mov targ 
                then (add_update 
-                      (Move {name = mov.name; element = mov.element; from = col;
+                    (Move {name = mov.name; element = mov.element; from = col;
                              toward = def_col; damage = !dmg_ref; hit = Hit; 
                              effectiveness = !efft_ref; effects = ercl}); 
                      do_move sd mov col targ)
@@ -705,7 +709,8 @@ let after_effects (sd : status_data) : status_data =
   let b_sl = (mod_hp bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) 
 
-let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : game_status_data =
+let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
+    game_status_data =
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = gsd in
   let sd = ((r_sl, r_inv), (b_sl, b_inv)) in
   let sd = initial_effects sd in
@@ -716,7 +721,8 @@ let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : gam
   let ((r_sl, r_inv), (b_sl, b_inv)) = sd in
   ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred))
 
-let find_next_data (g : game) (ra : command) (ba : command) : game_status_data =
+let find_next_data (g : game) (ra : command) (ba : command) : 
+    game_status_data =
   let curr_data = snd g in
   let (rdata, bdata) = curr_data in
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = (rdata, bdata) in
