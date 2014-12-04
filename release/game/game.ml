@@ -62,8 +62,7 @@ let initial_effects (sd : status_data) : status_data =
   let b_sl = (mod_status bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) end
 
-let determine_order (sd : status_data) (r_act : command) (b_act : command) :
-    (color * command) * (color * command) =
+let determine_order (sd : status_data) (r_act : command) (b_act : command) : (color * command) * (color * command) =
   match (fst (fst sd), fst (snd sd)) with
   | ([], [])
   | ([], _)
@@ -85,6 +84,311 @@ let determine_order (sd : status_data) (r_act : command) (b_act : command) :
                                   ((Red, r_act), (Blue, b_act)))
   else (add_update (SetFirstAttacker Blue); 
        ((Blue, b_act), (Red, r_act)))
+
+let dec_pp (sd : status_data) (mov : move) (col : color) : status_data =
+        if mov.name = "Struggle" then sd else
+        let data = match col with
+                   | Red -> fst sd
+                   | Blue -> snd sd in
+        let (s,st) = match fst data with
+                     | h::t -> (h,t)
+                     | _ -> failwith "dec_pp list error" in
+        let dec (mov : move) : move = 
+          {name = mov.name; element = mov.element; target = mov.target; 
+           max_pp = mov.max_pp; pp_remaining = mov.pp_remaining - 1; 
+           power = mov.power; accuracy = mov.accuracy; effects= mov.effects} in
+        let m_lst = [s.first_move; s.second_move; s.third_move; 
+                                                  s.fourth_move] in
+        let s = match m_lst with
+        | x1::x2::x3::x4::[] -> let m1 = if x1.name = mov.name
+                                         then dec x1
+                                         else x1 in
+                                let m2 = if x2.name = mov.name
+                                         then dec x2
+                                         else x2 in
+                                let m3 = if x3.name = mov.name
+                                         then dec x3
+                                         else x3 in
+                                let m4 = if x4.name = mov.name
+                                         then dec x4
+                                         else x4 in
+          {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
+           first_type = s.first_type; second_type = s.second_type;
+           first_move = m1; second_move = m2; third_move = m3; 
+           fourth_move = m4; attack = s.attack; spl_attack = s.spl_attack; 
+           defense = s.defense; spl_defense = s.spl_defense; speed = s.speed; 
+           status = s.status; mods = s.mods; cost = s.cost}
+        | _ -> failwith "shouldn't be raised" in
+        match col with
+        | Red -> ((s::st, snd (fst sd)), snd sd)
+        | Blue -> (fst sd, ((s::st), snd (snd sd)))
+
+let find_target (mov : move) (sts : status option) : target =
+  match (mov.target, sts) with
+  | (User, _) -> User
+  | (Opponent, Some Confused) -> if Random.int 99 < cSELF_ATTACK_CHANCE
+                                 then User
+                                 else Opponent
+  | (Opponent, _) -> Opponent
+
+let fold_effects (col : color) (targ : target) ((a, b) : status_data * (effect_result * color) list) (x : effect): status_data * (effect_result * color) list =
+  let (att_l, def_l) = match (col, targ) with
+                       | (Red, Opponent) -> (fst(fst a), fst(snd a))
+                       | (Red, User) -> (fst(fst a), fst(fst a))
+                       | (Blue, Opponent) -> (fst(snd a), fst(fst a))
+                       | (Blue, User) -> (fst(snd a), fst(snd a)) in
+  let (ah, at, dh, dt) = match (att_l, def_l) with
+                         | ([], [])
+                         | ([], _)
+                         | (_, []) -> failwith "foldeffects list error"
+                         | (ah::at, dh::dt) -> (ah, at, dh, dt) in
+  match x with
+  | InflictStatus sts -> begin match dh.status with
+                               | Some _ -> (a, b)
+                               | None -> 
+    let any_asleep (lst : steammon list) : bool = 
+      List.fold_left (fun a x -> a || x.status = Some Asleep) false lst
+    in let any_frozen (lst : steammon list) : bool = 
+      List.fold_left (fun a x -> a || x.status = Some Frozen) false lst
+    in if (sts = Asleep && ah <> dh && any_asleep def_l) ||
+          (sts = Frozen && any_frozen def_l) then (a, b)
+       else let dh = 
+    {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
+     first_type = dh.first_type; second_type = dh.second_type;
+     first_move = dh.first_move; second_move = dh.second_move;
+     third_move = dh.third_move; fourth_move = dh.fourth_move;
+     attack = dh.attack; spl_attack = dh.spl_attack; 
+     defense = dh.defense; spl_defense = dh.spl_defense; 
+     speed = dh.speed; status = Some sts; mods = dh.mods; 
+     cost = dh.cost} in 
+    match (col, targ) with
+    | (Red, Opponent)
+    | (Blue, User) -> ((fst a, (dh::dt, snd (snd a))), 
+                                ((InflictedStatus sts), Blue)::b)
+    | (Blue, Opponent)
+    | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
+                                ((InflictedStatus sts), Red)::b) end
+  | StatModifier (st, i) -> begin
+      let mods'' =  dh.mods in
+      let mods' = match st with
+      | Atk ->  {attack_mod = mods''.attack_mod + i;
+                 defense_mod = mods''.defense_mod;
+                 spl_attack_mod = mods''.spl_attack_mod;
+                 spl_defense_mod = mods''.spl_defense_mod;
+                 speed_mod = mods''.speed_mod}
+      | Def -> {attack_mod = mods''.attack_mod;
+                defense_mod = mods''.defense_mod + i;
+                spl_attack_mod = mods''.spl_attack_mod;
+                spl_defense_mod = mods''.spl_defense_mod;
+                speed_mod = mods''.speed_mod}
+      | SpA -> {attack_mod = mods''.attack_mod;
+                defense_mod = mods''.defense_mod;
+                spl_attack_mod = mods''.spl_attack_mod + i;
+                spl_defense_mod = mods''.spl_defense_mod;
+                speed_mod = mods''.speed_mod}
+      | SpD -> {attack_mod = mods''.attack_mod;
+                defense_mod = mods''.defense_mod;
+                spl_attack_mod = mods''.spl_attack_mod;
+                spl_defense_mod = mods''.spl_defense_mod + i;
+                speed_mod = mods''.speed_mod}
+      | Spe -> {attack_mod = mods''.attack_mod;
+                defense_mod = mods''.defense_mod;
+                spl_attack_mod = mods''.spl_attack_mod;
+                spl_defense_mod = mods''.spl_defense_mod;
+                speed_mod = mods''.speed_mod + i} in
+      let dh = 
+       {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
+        first_type = dh.first_type; second_type = dh.second_type;
+        first_move = dh.first_move; second_move = dh.second_move;
+        third_move = dh.third_move; fourth_move = dh.fourth_move;
+        attack = dh.attack; spl_attack = dh.spl_attack; 
+        defense = dh.defense; spl_defense = dh.spl_defense; 
+        speed = dh.speed; status = dh.status; mods = mods'; 
+        cost = dh.cost} in
+      match (col, targ) with
+      | (Red, Opponent)
+      | (Blue, User) -> ((fst a, (dh::dt, snd (snd a))), 
+                                  ((StatModified (st, i)), Blue)::b)
+      | (Blue, Opponent)
+      | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
+                                  ((StatModified (st, i)), Red)::b) end
+  | RecoverPercent i -> begin
+      let abs = (float_of_int i) *. 
+                (float_of_int dh.max_hp) /.
+                100. in
+      let abs = int_of_float abs in
+      let curr_hp' = min dh.max_hp (dh.curr_hp + abs) in
+      let dh =
+       {species = dh.species; curr_hp = curr_hp'; max_hp = dh.max_hp; 
+        first_type = dh.first_type; second_type = dh.second_type;
+        first_move = dh.first_move; second_move = dh.second_move;
+        third_move = dh.third_move; fourth_move = dh.fourth_move;
+        attack = dh.attack; spl_attack = dh.spl_attack; 
+        defense = dh.defense; spl_defense = dh.spl_defense; 
+        speed = dh.speed; status = dh.status; mods = dh.mods; 
+        cost = dh.cost} in
+      match (col, targ) with
+      | (Red, Opponent)
+      | (Blue, User) -> ((fst a, (dh::dt, snd (snd a))), 
+                                  ((Recovered i), Blue)::b)
+      | (Blue, Opponent)
+      | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
+                                  ((Recovered i), Red)::b) end
+  | Recoil i -> begin
+      let abs = (float_of_int i) *. 
+                (float_of_int ah.max_hp) /.
+                100. in
+      let abs = int_of_float abs in
+      let curr_hp' = max 0 (ah.curr_hp - abs) in
+      let ah =
+       {species = ah.species; curr_hp = curr_hp'; max_hp = ah.max_hp; 
+        first_type = ah.first_type; second_type = ah.second_type;
+        first_move = ah.first_move; second_move = ah.second_move;
+        third_move = ah.third_move; fourth_move = ah.fourth_move;
+        attack = ah.attack; spl_attack = ah.spl_attack; 
+        defense = ah.defense; spl_defense = ah.spl_defense; 
+        speed = ah.speed; status = ah.status; mods = ah.mods; 
+        cost = ah.cost} in
+      match col with
+      | Red -> (((ah::at, snd (fst a)), snd a), 
+                                  ((Recoiled i), Red)::b)
+      | Blue -> ((fst a, (ah::at, snd (snd a))), 
+                                  ((Recoiled i), Blue)::b) end
+  | DamagePercent i -> begin
+      let abs = (float_of_int i) *. 
+                (float_of_int dh.max_hp) /.
+                100. in
+      let abs = int_of_float abs in
+      let curr_hp' = max 0 (dh.curr_hp - abs) in
+      let dh =
+       {species = dh.species; curr_hp = curr_hp'; max_hp = dh.max_hp; 
+        first_type = dh.first_type; second_type = dh.second_type;
+        first_move = dh.first_move; second_move = dh.second_move;
+        third_move = dh.third_move; fourth_move = dh.fourth_move;
+        attack = dh.attack; spl_attack = dh.spl_attack; 
+        defense = dh.defense; spl_defense = dh.spl_defense; 
+        speed = dh.speed; status = dh.status; mods = dh.mods; 
+        cost = dh.cost} in
+      match (col, targ) with
+      | (Red, Opponent)
+      | (Blue, User) -> ((fst a, (dh::dt, snd (snd a))), 
+                                  ((Damaged i), Blue)::b)
+      | (Blue, Opponent)
+      | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
+                                  ((Damaged i), Red)::b) end
+  | HealStatus stslst -> begin 
+      let sts' = match dh.status with
+                 | Some sts -> if List.mem sts stslst then None
+                               else Some sts
+                 | None -> None in
+      let dh =
+       {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
+        first_type = dh.first_type; second_type = dh.second_type;
+        first_move = dh.first_move; second_move = dh.second_move;
+        third_move = dh.third_move; fourth_move = dh.fourth_move;
+        attack = dh.attack; spl_attack = dh.spl_attack; 
+        defense = dh.defense; spl_defense = dh.spl_defense; 
+        speed = dh.speed; status = sts'; mods = dh.mods; 
+        cost = dh.cost} in
+      match (col, targ) with
+      | (Red, Opponent)
+      | (Blue, User) -> begin match sts' with 
+                        | Some sts -> ((fst a, (dh::dt, snd (snd a))), 
+                                       ((HealedStatus sts), Blue)::b)
+                        | None -> ((fst a, (dh::dt, snd (snd a))), b)
+                        end
+                                  
+      | (Blue, Opponent)
+      | (Red, User) -> begin match sts' with 
+                       | Some sts -> (((dh::dt, snd (fst a)), snd a), 
+                                       ((HealedStatus sts), Red)::b) 
+                       | None -> (((dh::dt, snd (fst a)), snd a), b) 
+                       end
+      end
+  | RestorePP i -> begin
+  let add_pp (m : move) : move = 
+  {name = m.name; element = m.element; target = m.target;
+   max_pp = m.max_pp; pp_remaining = min m.max_pp (m.pp_remaining + i);
+   power = m.power; accuracy = m.accuracy; effects = m.effects} in
+  let first_move' = add_pp dh.first_move in
+  let second_move' = add_pp dh.second_move in
+  let third_move' = add_pp dh.third_move in
+  let fourth_move' = add_pp dh.fourth_move in
+  let dh = 
+  {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
+   first_type = dh.first_type; second_type = dh.second_type;
+   first_move = first_move'; second_move = second_move';
+   third_move = third_move'; fourth_move = fourth_move';
+   attack = dh.attack; spl_attack = dh.spl_attack; 
+   defense = dh.defense; spl_defense = dh.spl_defense; speed= dh.speed; 
+   status = dh.status; mods = dh.mods; cost = dh.cost} in
+   match (col, targ) with
+   | (Red, Opponent)
+   | (Blue, User) -> ((fst a, (dh::dt, snd (snd a))), 
+                               ((RestoredPP i), Blue)::b)
+   | (Blue, Opponent)
+   | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
+                               ((RestoredPP i), Red)::b) end
+
+let move_occurs (mov : move) (targ : target) : bool =
+        match targ with
+        | User -> true
+        | Opponent -> Random.int 99 < mov.accuracy
+
+let dmg_ref = ref 0
+let efft_ref = ref Ineffective
+
+let do_move (sd : status_data) (mov : move) (col : color) (targ : target) : status_data = 
+        let (r_sl, b_sl) = (fst (fst sd), fst (snd sd)) in
+        let (rh, rt, bh, bt) = match (r_sl, b_sl) with
+                               | ([], [])
+                               | ([], _)
+                               | (_, []) -> failwith "do_move list error"
+                               | (rh::rt, bh::bt) -> (rh, rt, bh, bt) in
+        let (attacker, defender) = match (col, targ) with
+                                   | (Red, Opponent) -> (rh, bh)
+                                   | (Blue, Opponent) -> (bh, rh) 
+                                   | (Red, User) -> (rh, rh)
+                                   | (Blue, User) -> (bh, bh) in
+        let stab = if List.mem (Some mov.element) [attacker.first_type;
+                                                   attacker.second_type]
+                   then cSTAB_BONUS
+                   else 1. in
+        let (efft, s_mult) = calculate_type_matchup mov.element 
+                              (defender.first_type, defender.second_type) in
+        let bw = match attacker.status with
+                 | Some Burned -> cBURN_WEAKNESS
+                 | _ -> 1. in
+        let rand = (Random.int(100 - cMIN_DAMAGE_RANGE)) + cMIN_DAMAGE_RANGE in
+        let mult = stab *. s_mult *. bw *. (float_of_int rand) /. 100. in
+        let (atk, def) = if is_special mov.element 
+                         then ((float_of_int attacker.spl_attack) *. 
+                         multiplier_of_modifier(attacker.mods).spl_attack_mod,
+                         (float_of_int defender.spl_defense) *.
+                         multiplier_of_modifier(defender.mods).spl_defense_mod)
+                         else ((float_of_int attacker.attack) *.
+                         multiplier_of_modifier(attacker.mods).attack_mod,
+                         (float_of_int defender.defense) *.
+                         multiplier_of_modifier(defender.mods).defense_mod) in
+        let (atk, def) = (int_of_float atk, int_of_float def) in
+        let pow = mov.power in
+        let dmg = calculate_damage atk def pow mult in
+        dmg_ref := min defender.curr_hp dmg;
+        efft_ref := efft;
+        let def' = {species = defender.species; curr_hp = max (defender.curr_hp - dmg) 0; 
+                    max_hp = defender.max_hp; first_type = defender.first_type; 
+                    second_type = defender.second_type; first_move = defender.first_move; 
+                    second_move = defender.second_move; third_move = defender.third_move; 
+                    fourth_move = defender.fourth_move; attack = defender.attack; 
+                    spl_attack = defender.spl_attack; defense = defender.spl_defense; 
+                    spl_defense = defender.spl_defense; speed = defender.spl_defense; 
+                    status = defender.status; mods = defender.mods; cost = defender.cost} in
+        let sd = match (col, targ) with
+                 | (Red, Opponent)
+                 | (Blue, User) -> (fst sd, (def'::bt, snd (snd sd)))
+                 | (Red, User) 
+                 | (Blue, Opponent) ->  ((def'::rt, snd (fst sd)), snd sd) in
+        sd
 
 let do_action (sd : status_data) (col : color) (act : command) : status_data =
   let sl = match col with
@@ -307,7 +611,7 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
       match col with
       | Red -> (data, snd sd)
       | Blue -> (fst sd, data)
-  end
+    end
   | Action (UseMove str) -> begin
       let s = match sl with
               | h::_ -> h
@@ -326,7 +630,7 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
       | Some Frozen -> add_update (Move {name = str; element = mov.element;
                                          from = col; toward = invert_color col;
                                          damage = 0; hit = Failed Frozen; 
-                                         effectiveness = Ineffective
+                                         effectiveness = Ineffective;
                                          effects = []}); 
                        sd
       | Some Paralyzed when Random.int 99 < cPARALYSIS_CHANCE -> 
@@ -337,259 +641,9 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
           sd
       | _ -> 
       let mov = if mov.pp_remaining = 0 then 
-                  Table.find Initialization.mon_table "Struggle"
+                  Table.find Initialization.move_table "Struggle"
                 else mov in
-      let find_target (mov : move) (sts : status option) : target =
-        match (mov.target, sts) with
-        | (User, _) -> User
-        | (Opponent, Some Confused) -> if Random.int 99 < cSELF_ATTACK_CHANCE
-                                       then User
-                                       else Opponent
-        | (Opponent, _) -> Opponent in
       let targ = find_target mov s.status in
-      let move_occurs (mov : move) (targ : target) : bool =
-        match targ with
-        | User -> true
-        | Opponent -> Random.int 99 < mov.accuracy in
-      let do_move (sd : status_data) (mov : move) (col : color) 
-          (targ : target) : status_data = 
-        let (r_sl, b_sl) = (fst (fst sd), fst (snd sd)) in
-        let (rh, rt, bh, bt) = match (r_sl, b_sl) with
-                               | ([], [])
-                               | ([], _)
-                               | (_, []) -> failwith "do_move list error"
-                               | (rh::rt, bh::bt) -> (rh, rt, bh, bt) in
-        let (attacker, defender) = match (col, targ) with
-                                   | (Red, Opponent) -> (rh, bh)
-                                   | (Blue, Opponent) -> (bh, rh) 
-                                   | (Red, User) -> (rh, rh)
-                                   | (Blue, User) -> (bh, bh) in
-        let stab = if List.mem (Some mov.element) [attacker.first_type;
-                                                   attacker.second_type]
-                   then cSTAB_BONUS
-                   else 1. in
-        let (efft, s_mult) = calculate_type_matchup mov.element 
-                              (defender.first_type, defender.second_type) in
-        let bw = match attacker.status with
-                 | Some Burned -> cBURN_WEAKNESS
-                 | _ -> 1. in
-        let rand = (Random.int(100 - cMIN_DAMAGE_RANGE)) + cMIN_DAMAGE_RANGE in
-        let mult = stab *. s_mult *. bw *. (float_of_int rand) /. 100 in
-        let (atk, def) = if is_special mov.element 
-                         then (attacker.spl_attack * 
-                         multiplier_of_modifier(attacker.mods).spl_attack_mod,
-                         defender.spl_defense *
-                         multiplier_of_modifier(defender.mods).spl_defense_mod)
-                         else (attacker.attack *
-                         multiplier_of_modifier(attacker.mods).attack_mod,
-                         defender.defense *
-                         multiplier_of_modifier(defender.mods).defense_mod) in
-        let pow = mov.power in
-        let dmg = calculate_damage atk def pow mult in
-        let def' = {species = def.species; curr_hp = max (def.curr_hp - dmg) 0; 
-                    max_hp = def.max_hp; first_type = def.first_type; 
-                    second_type = def.second_type; first_move = def.first_move; 
-                    second_move = def.second_move; third_move = def.third_move; 
-                    fourth_move = def.fourth_move; attack = def.attack; 
-                    spl_attack = def.spl_attack; defense = def.spl_defense; 
-                    spl_defense = def.spl_defense; speed = def.spl_defense; 
-                    status = def.status; mods = def.mods; cost = def.cost} in
-        let sd = match (col, targ) with
-                 | (Red, Opponent)
-                 | (Blue, User) -> (fst sd, (def'::bt, snd (snd sd)))
-                 | (Red, User) 
-                 | (Blue, Opponent) ->  ((def'::rt, snd (fst sd)), snd sd) in
-        let fold_effects (col : color) (targ : target) 
-            ((a, b) : status_data * (effect_result * color) list) (x : effect): 
-            status_data * (effect_result * color) list =
-          let (att_l, def_l) = match (col, targ) with
-                               | (Red, Opponent) -> (fst(fst sd), fst(snd sd))
-                               | (Red, User) -> (fst(fst sd), fst(fst sd))
-                               | (Blue, Opponent) -> (fst(snd sd), fst(fst sd))
-                               | (Blue, User) -> (fst(snd sd), fst(snd sd)) in
-          let (ah, at, dh, dt) = match (att_l, def_l) with
-                                 | ([], [])
-                                 | ([], _)
-                                 | (_, []) -> failwith "foldeffects list error"
-                                 | (ah::at, dh::dt) -> (ah, at, dh, dt) in
-          match eff with
-          | InflictStatus sts -> begin match dh.status with
-                                       | Some _ -> (a, b)
-                                       | None -> 
-            let any_asleep (lst : steammon list) : bool = 
-              List.fold_left (fun a x -> a || x.status = Some Asleep) false lst
-            in let any_frozen (lst : steammon list) : bool = 
-              List.fold_left (fun a x -> a || x.status = Some Frozen) false lst
-            in if (sts = Asleep && ah <> dh && any_asleep def_l) ||
-                  (sts = Frozen && any_frozen def_l) then (a, b)
-               else let dh = 
-            {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
-             first_type = dh.first_type; second_type = dh.second_type;
-             first_move = dh.first_move; second_move = dh.second_move;
-             third_move = dh.third_move; fourth_move = dh.fourth_move;
-             attack = dh.attack; spl_attack = dh.spl_attack; 
-             defense = dh.defense; spl_defense = dh.spl_defense; 
-             speed = dh.speed; status = Some sts; mods = dh.mods; 
-             cost = dh.cost} in 
-            match (col, targ) with
-            | (Red, Opponent)
-            | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                        ((InflictedStatus sts), Blue)::b)
-            | (Blue, Opponent)
-            | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                        ((InflictedStatus sts), Red)::b) end
-          | StatModifier (st, i) -> begin 
-              let mods' = match st with
-              | Atk ->  {attack_mod = mods'.attack_mod + i;
-                         defense_mod = mods'.defense_mod;
-                         spl_attack_mod = mods'.spl_attack_mod;
-                         spl_defense_mod = mods'.spl_defense_mod;
-                         speed_mod = mods'.speed_mod}
-              | Def -> {attack_mod = mods'.attack_mod;
-                        defense_mod = mods'.defense_mod + i;
-                        spl_attack_mod = mods'.spl_attack_mod;
-                        spl_defense_mod = mods'.spl_defense_mod;
-                        speed_mod = mods'.speed_mod}
-              | SpA -> {attack_mod = mods'.attack_mod;
-                        defense_mod = mods'.defense_mod;
-                        spl_attack_mod = mods'.spl_attack_mod + i;
-                        spl_defense_mod = mods'.spl_defense_mod;
-                        speed_mod = mods'.speed_mod}
-              | SpD -> {attack_mod = mods'.attack_mod;
-                        defense_mod = mods'.defense_mod;
-                        spl_attack_mod = mods'.spl_attack_mod;
-                        spl_defense_mod = mods'.spl_defense_mod + i;
-                        speed_mod = mods'.speed_mod}
-              | Spe -> {attack_mod = mods'.attack_mod;
-                        defense_mod = mods'.defense_mod;
-                        spl_attack_mod = mods'.spl_attack_mod;
-                        spl_defense_mod = mods'.spl_defense_mod;
-                        speed_mod = mods'.speed_mod + i} in
-              let dh = 
-               {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
-                first_type = dh.first_type; second_type = dh.second_type;
-                first_move = dh.first_move; second_move = dh.second_move;
-                third_move = dh.third_move; fourth_move = dh.fourth_move;
-                attack = dh.attack; spl_attack = dh.spl_attack; 
-                defense = dh.defense; spl_defense = dh.spl_defense; 
-                speed = dh.speed; status = dh.status; mods = mods'; 
-                cost = dh.cost} in
-              match (col, targ) with
-              | (Red, Opponent)
-              | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                          ((StatModified (st, i)), Blue)::b)
-              | (Blue, Opponent)
-              | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                          ((StatModified (st, i)), Red)::b) end
-          | RecoverPercent i -> begin
-              let abs = (float_of_int i) *. 
-                        (float_of_int dh.max_hp) /.
-                        100. in
-              let abs = int_of_float abs in
-              let curr_hp' = min dh.max_hp (dh.curr_hp + abs) in
-              let dh =
-               {species = dh.species; curr_hp = curr_hp'; max_hp = dh.max_hp; 
-                first_type = dh.first_type; second_type = dh.second_type;
-                first_move = dh.first_move; second_move = dh.second_move;
-                third_move = dh.third_move; fourth_move = dh.fourth_move;
-                attack = dh.attack; spl_attack = dh.spl_attack; 
-                defense = dh.defense; spl_defense = dh.spl_defense; 
-                speed = dh.speed; status = dh.status; mods = dh.mods; 
-                cost = dh.cost} in
-              match (col, targ) with
-              | (Red, Opponent)
-              | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                          ((RecoveredPercent i), Blue)::b)
-              | (Blue, Opponent)
-              | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                          ((RecoveredPercent i), Red)::b) end
-          | Recoil i -> begin
-              let abs = (float_of_int i) *. 
-                        (float_of_int ah.max_hp) /.
-                        100. in
-              let abs = int_of_float abs in
-              let curr_hp' = max 0 (ah.curr_hp - abs) in
-              let ah =
-               {species = ah.species; curr_hp = curr_hp'; max_hp = ah.max_hp; 
-                first_type = ah.first_type; second_type = ah.second_type;
-                first_move = ah.first_move; second_move = ah.second_move;
-                third_move = ah.third_move; fourth_move = ah.fourth_move;
-                attack = ah.attack; spl_attack = ah.spl_attack; 
-                defense = ah.defense; spl_defense = ah.spl_defense; 
-                speed = ah.speed; status = ah.status; mods = ah.mods; 
-                cost = ah.cost} in
-              match col with
-              | Red -> (((ah::at, snd (fst sd)), snd sd), 
-                                          ((Recoiled i), Red)::b)
-              | Blue -> ((fst sd, (ah::at, snd (snd sd))), 
-                                          ((Recoil i), Blue)::b) end
-          | DamagePercent i -> begin
-              let abs = (float_of_int i) *. 
-                        (float_of_int dh.max_hp) /.
-                        100. in
-              let abs = int_of_float abs in
-              let curr_hp' = max 0 (dh.curr_hp - abs) in
-              let dh =
-               {species = dh.species; curr_hp = curr_hp'; max_hp = dh.max_hp; 
-                first_type = dh.first_type; second_type = dh.second_type;
-                first_move = dh.first_move; second_move = dh.second_move;
-                third_move = dh.third_move; fourth_move = dh.fourth_move;
-                attack = dh.attack; spl_attack = dh.spl_attack; 
-                defense = dh.defense; spl_defense = dh.spl_defense; 
-                speed = dh.speed; status = dh.status; mods = dh.mods; 
-                cost = dh.cost} in
-              match (col, targ) with
-              | (Red, Opponent)
-              | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                          ((Damaged i), Blue)::b)
-              | (Blue, Opponent)
-              | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                          ((Damaged i), Red)::b) end
-          | HealStatus stslst -> begin 
-              let sts' = match dh.status with
-                         | Some sts -> if List.mem sts stslst then None
-                                       else Some sts
-                         | None -> None in
-              let dh =
-               {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
-                first_type = dh.first_type; second_type = dh.second_type;
-                first_move = dh.first_move; second_move = dh.second_move;
-                third_move = dh.third_move; fourth_move = dh.fourth_move;
-                attack = dh.attack; spl_attack = dh.spl_attack; 
-                defense = dh.defense; spl_defense = dh.spl_defense; 
-                speed = dh.speed; status = sts'; mods = dh.mods; 
-                cost = dh.cost} in
-              match (col, targ) with
-              | (Red, Opponent)
-              | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                          ((HealedStatus sts'), Blue)::b)
-              | (Blue, Opponent)
-              | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                          ((HealedStatus sts'), Red)::b) end
-          | RestorePP i -> begin
-          let add_pp (m : move) : move = 
-          {name = m.name; element = m.element; target = m.target;
-           max_pp = m.max_pp; pp_remaining = min m.max_pp (m.pp_remaining + i);
-           power = m.power; accuracy = m.accuracy; effects = m.effects} in
-          let first_move' = add_pp dh.first_move in
-          let second_move' = add_pp dh.second_move in
-          let third_move' = add_pp dh.third_move in
-          let fourth_move' = add_pp dh.fourth_move in
-          let dh = 
-          {species = dh.species; curr_hp = dh.curr_hp; max_hp = dh.max_hp; 
-           first_type = dh.first_type; second_type = dh.second_type;
-           first_move = first_move'; second_move = second_move';
-           third_move = third_move'; fourth_move = fourth_move';
-           attack = dh.attack; spl_attack = dh.spl_attack; 
-           defense = dh.defense; spl_defense = dh.spl_defense; speed= dh.speed; 
-           status = dh.status; mods = dh.mods; cost = dh.cost} in
-           match (col, targ) with
-           | (Red, Opponent)
-           | (Blue, User) -> ((fst sd, (dh::dt, snd (snd sd))), 
-                                       ((RestoredPP i), Blue)::b)
-           | (Blue, Opponent)
-           | (Red, User) -> (((dh::dt, snd (fst sd)), snd sd), 
-                                       ((RestoredPP i), Red)::b) end in
       let eff_lst = match mov.effects with
                       | None -> []
                       | Some (lst, _, chance) ->
@@ -601,47 +655,20 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
                     | (Blue, User) -> Blue
                     | (Red, User)
                     | (Blue, Opponent) -> Red in
-      add_update (Move {name = mov.name; element = mov.element; from = col;
-                        toward = def_col; damage = dmg; hit = Hit; 
-                        effectiveness = efft; effects = ercl});
-      let sd = if move_occurs mov targ then do_move sd mov col targ
-               else add_update 
+      let sd = if move_occurs mov targ 
+               then (add_update 
+                      (Move {name = mov.name; element = mov.element; from = col;
+                             toward = def_col; damage = !dmg_ref; hit = Hit; 
+                             effectiveness = !efft_ref; effects = ercl}); 
+                     do_move sd mov col targ)
+               else (add_update 
                       (Move {name = mov.name; element = mov.element;
-                             from = col; toward = targ; damage = 0;
+                             from = col; toward = def_col; damage = 0;
                              hit = Miss; effectiveness = Ineffective;
-                             effects = []}); 
-                    sd in
-      let dec_pp (sd : status_data) (mov : move) (col : color) : status_data =
-        if mov.name = "Struggle" then sd else
-        let data = match col with
-                   | Red -> fst sd
-                   | Blue -> snd sd in
-        let (s,st) = match fst data with
-                     | h::t -> (h,t)
-                     | _ -> failwith "dec_pp list error" in
-        let dec (mov : move) : move = 
-          {name = mov.name; element = mov.element; target = mov.target; 
-           max_pp = mov.max_pp; pp_remaining = mov.pp_remaining - 1; 
-           power = mov.power; accuracy = mov.accuracy; effects= mov.effects} in
-        let m_lst = [s.first_move; s.second_move; s.third_move; 
-                                                  s.fourth_move] in
-        let s = match m_lst with
-        | m1::m2::m3::m4::[] -> let m1::m2::m3::m4::[] =
-                                List.map (fun x -> if x.name = mov.name 
-                                                   then dec x
-                                                   else x) m_lst in
-          {species = s.species; curr_hp = s.curr_hp; max_hp = s.max_hp; 
-           first_type = s.first_type; second_type = s.second_type;
-           first_move = m1; second_move = m2; third_move = m3; 
-           fourth_move = m4; attack = s.attack; spl_attack = s.spl_attack; 
-           defense = s.defense; spl_defense = s.spl_defense; speed = s.speed; 
-           status = s.status; mods = s.mods; cost = s.cost}
-        | _ -> failwith "shouldn't be raised" in
-        match col with
-        | Red -> ((s::st, snd (fst sd)), snd sd)
-        | Blue -> (fst sd, (s::st), snd (snd sd)) in
-      dec_pp sd mov col end
-  | _ -> sd 
+                             effects = []});
+                    sd) in
+      (dec_pp sd mov col) end
+  | _ -> sd
 
 let after_effects (sd : status_data) : status_data =
   let r_sl = fst (fst sd) in
@@ -678,8 +705,7 @@ let after_effects (sd : status_data) : status_data =
   let b_sl = (mod_hp bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) 
 
-let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
-    game_status_data =
+let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : game_status_data =
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = gsd in
   let sd = ((r_sl, r_inv), (b_sl, b_inv)) in
   let sd = initial_effects sd in
@@ -687,12 +713,10 @@ let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) :
   let sd = do_action sd first act1 in
   let sd = do_action sd second act2 in
   let sd = after_effects sd in
-  ignore first; ignore second; ignore act1; ignore act2;
   let ((r_sl, r_inv), (b_sl, b_inv)) = sd in
   ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred))
 
-let find_next_data (g : game) (ra : command) (ba : command) : 
-    game_status_data =
+let find_next_data (g : game) (ra : command) (ba : command) : game_status_data =
   let curr_data = snd g in
   let (rdata, bdata) = curr_data in
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = (rdata, bdata) in
