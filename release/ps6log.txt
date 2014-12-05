@@ -1,0 +1,576 @@
+commit e1e9179df4a0126aa62bb6d81981c1a83fd9afb9
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Thu Dec 4 23:52:22 2014 -0500
+
+    FINISHED
+
+ release/game/game.ml                               |  65 +++-
+ release/team/bot.ml                                |   1 +
+ ...to_the_yard_damn_right_its_botter_than_yours.ml | 380 +++++++++++++++++++++
+ 3 files changed, 445 insertions(+), 1 deletion(-)
+
+commit 2aa14e30ef33fd3aeb69837c86e0d7aba04045c2
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Thu Dec 4 10:12:58 2014 -0500
+
+    fixed formatting
+
+ release/game/game.ml | 118 +++++++++++++++++++++++++++------------------------
+ 1 file changed, 62 insertions(+), 56 deletions(-)
+
+commit 5bd5169d69d81a51c08267fa2ec8322d4716d3e1
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Thu Dec 4 09:40:26 2014 -0500
+
+    game done, gui updates seem incorrect, starting bot soon, hopefully can fix gui updates in office hours?
+
+ release/game/game.ml | 622 ++++++++++++++++++++++++++-------------------------
+ 1 file changed, 323 insertions(+), 299 deletions(-)
+
+commit c4f893a325e558652a94c587859d4eac7d8100a6
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Thu Dec 4 05:46:52 2014 -0500
+
+    finished game, debugging
+
+ release/game/game.ml | 353 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 342 insertions(+), 11 deletions(-)
+
+commit 52846ab31296185f6f6bd3ee507f6a0f2520f5cc
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Wed Dec 3 17:46:09 2014 -0500
+
+    Finished item and after effects, moves up next
+
+ release/game/game.ml | 210 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 193 insertions(+), 17 deletions(-)
+
+commit 7ead2601747cc603b984a18e2274e30feae86b4d
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Wed Dec 3 05:26:45 2014 -0500
+
+    still working on battle phase, almost done with use item, use move up next then done
+
+ release/game/game.ml | 103 ++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 97 insertions(+), 6 deletions(-)
+
+commit 84ccc01c0b0934f503ee8f951d2f0eeb75c5126f
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Wed Dec 3 03:22:36 2014 -0500
+
+    working on battle state, do_action function next up
+
+ release/game/game     | Bin 169472 -> 171467 bytes
+ release/game/game.ml  |  78 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ release/game/state.ml |   8 ------
+ 3 files changed, 77 insertions(+), 9 deletions(-)
+
+commit 42081e41df79f1237eb3acedd545acfd6f0de028
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Tue Dec 2 18:57:35 2014 -0500
+
+    fixed state transitions, gui updates working, ready to start battle state
+
+ release/game/game     | Bin 168235 -> 169472 bytes
+ release/game/game.ml  |  27 ++++++++++++++++++++++++++-
+ release/game/state.ml |  20 +++++++++++++++-----
+ 3 files changed, 41 insertions(+), 6 deletions(-)
+
+commit 39b8f45b6c4a160859ccff0cd685cbffe4d7532d
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Tue Dec 2 02:33:48 2014 -0500
+
+    fixed game.ml, working on battle stage
+
+ release/game/game      | Bin 159333 -> 168235 bytes
+ release/game/game.ml   |  39 ++++++++++++++++++++-------------------
+ release/game/state.mli |   9 ++++++++-
+ 3 files changed, 28 insertions(+), 20 deletions(-)
+
+commit 781084a9b2b1ece6cb845924e3cc38b89f4c702f
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Tue Dec 2 00:35:48 2014 -0500
+
+    debugging game.ml
+
+ release/game/build_game.sh |   2 +-
+ release/game/game.ml       | 129 ++++++++++++++++++++++++++++++++-------------
+ release/game/state.ml      |   4 +-
+ release/game/state.mli     |   4 +-
+ 4 files changed, 98 insertions(+), 41 deletions(-)
+
+commit 18d71c5ac48db9be3ef7be6f2db3f7be8cc1987f
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Mon Dec 1 18:14:51 2014 -0500
+
+    still working on handle_step
+
+ release/game/game.ml | 77 +++++++++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 61 insertions(+), 16 deletions(-)
+
+commit c35a4b804489a7e5d57705ae2b0117614feaf43d
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Sun Nov 23 21:37:29 2014 -0500
+
+    Writing handle_step helper functions
+
+ release/game/game.ml   | 67 ++++++++++++++++++++++++++++++++++----------------
+ release/game/state.ml  | 64 +++++++++++++++++++++++++++++++++++++++++------
+ release/game/state.mli | 15 +++++++++++
+ 3 files changed, 118 insertions(+), 28 deletions(-)
+
+commit dc367b7ffff141881011498860543ca2c8ae9b40
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Sun Nov 23 14:42:23 2014 -0500
+
+    Finished state.ml
+
+ release/game/state.ml | 50 ++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 42 insertions(+), 8 deletions(-)
+
+commit 383f0d8a89465907d3c76ff3505ab597f8b467fa
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Sat Nov 22 18:41:32 2014 -0500
+
+    finished state.mli, working on state.ml
+
+ release/game/game      | Bin 0 -> 159333 bytes
+ release/game/state.ml  |  21 +++++++++++++++++++++
+ release/game/state.mli |  12 ++++++++++++
+ 3 files changed, 33 insertions(+)
+
+commit 3d4c0aff854ff14bbceb1b0db863df01bdd154a7
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Sat Nov 22 12:31:14 2014 -0500
+
+    modified README.md
+
+ README.md | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+commit 4db8b3a0cd5d6c27add988f180bd989308cbcbc6
+Author: vdd6@cornell.edu <vdd6@cornell.edu>
+Date:   Sat Nov 22 10:44:58 2014 -0500
+
+    added all starter code, .gitignore, and changed README.md
+
+ .gitignore                              |  29 +++
+ README.md                               |   3 +
+ release/game/build_game.sh              |   9 +
+ release/game/game.ml                    |  33 +++
+ release/game/game.mli                   |  40 ++++
+ release/game/initialization.ml          | 120 ++++++++++
+ release/game/initialization.mli         |  16 ++
+ release/game/moves.csv                  | 333 +++++++++++++++++++++++++++
+ release/game/netgraphics.ml             | 123 ++++++++++
+ release/game/netgraphics.mli            |  16 ++
+ release/game/server.ml                  | 244 ++++++++++++++++++++
+ release/game/steammon.csv               | 390 ++++++++++++++++++++++++++++++++
+ release/gui/data/background.jpg         | Bin 0 -> 82739 bytes
+ release/gui/data/pokeball.png           | Bin 0 -> 63424 bytes
+ release/gui/data/pokemon/abra.png       | Bin 0 -> 821 bytes
+ release/gui/data/pokemon/absol.png      | Bin 0 -> 1204 bytes
+ release/gui/data/pokemon/aerodactyl.png | Bin 0 -> 1228 bytes
+ release/gui/data/pokemon/aggron.png     | Bin 0 -> 1549 bytes
+ release/gui/data/pokemon/aipom.png      | Bin 0 -> 878 bytes
+ release/gui/data/pokemon/alakazam.png   | Bin 0 -> 1148 bytes
+ release/gui/data/pokemon/altaria.png    | Bin 0 -> 1072 bytes
+ release/gui/data/pokemon/ampharos.png   | Bin 0 -> 993 bytes
+ release/gui/data/pokemon/anorith.png    | Bin 0 -> 942 bytes
+ release/gui/data/pokemon/arbok.png      | Bin 0 -> 1175 bytes
+ release/gui/data/pokemon/arcanine.png   | Bin 0 -> 1508 bytes
+ release/gui/data/pokemon/ariados.png    | Bin 0 -> 1152 bytes
+ release/gui/data/pokemon/armaldo.png    | Bin 0 -> 1575 bytes
+ release/gui/data/pokemon/aron.png       | Bin 0 -> 526 bytes
+ release/gui/data/pokemon/articuno.png   | Bin 0 -> 1377 bytes
+ release/gui/data/pokemon/azumarill.png  | Bin 0 -> 830 bytes
+ release/gui/data/pokemon/azurill.png    | Bin 0 -> 815 bytes
+ release/gui/data/pokemon/bagon.png      | Bin 0 -> 711 bytes
+ release/gui/data/pokemon/baltoy.png     | Bin 0 -> 554 bytes
+ release/gui/data/pokemon/banette.png    | Bin 0 -> 776 bytes
+ release/gui/data/pokemon/barboach.png   | Bin 0 -> 795 bytes
+ release/gui/data/pokemon/bayleef.png    | Bin 0 -> 1125 bytes
+ release/gui/data/pokemon/beautifly.png  | Bin 0 -> 929 bytes
+ release/gui/data/pokemon/beedrill.png   | Bin 0 -> 1181 bytes
+ release/gui/data/pokemon/beldum.png     | Bin 0 -> 687 bytes
+ release/gui/data/pokemon/bellossom.png  | Bin 0 -> 733 bytes
+ release/gui/data/pokemon/bellsprout.png | Bin 0 -> 727 bytes
+ release/gui/data/pokemon/blastoise.png  | Bin 0 -> 1422 bytes
+ release/gui/data/pokemon/blaziken.png   | Bin 0 -> 1335 bytes
+ release/gui/data/pokemon/blissey.png    | Bin 0 -> 1112 bytes
+ release/gui/data/pokemon/breloom.png    | Bin 0 -> 1134 bytes
+ release/gui/data/pokemon/bulbasaur.png  | Bin 0 -> 723 bytes
+ release/gui/data/pokemon/butterfree.png | Bin 0 -> 981 bytes
+ release/gui/data/pokemon/cacnea.png     | Bin 0 -> 925 bytes
+ release/gui/data/pokemon/cacturne.png   | Bin 0 -> 1235 bytes
+ release/gui/data/pokemon/camerupt.png   | Bin 0 -> 1113 bytes
+ release/gui/data/pokemon/carvanha.png   | Bin 0 -> 941 bytes
+ release/gui/data/pokemon/cascoon.png    | Bin 0 -> 687 bytes
+ release/gui/data/pokemon/castform.png   | Bin 0 -> 1075 bytes
+ release/gui/data/pokemon/caterpie.png   | Bin 0 -> 680 bytes
+ release/gui/data/pokemon/celebi.png     | Bin 0 -> 715 bytes
+ release/gui/data/pokemon/chansey.png    | Bin 0 -> 906 bytes
+ release/gui/data/pokemon/charizard.png  | Bin 0 -> 1491 bytes
+ release/gui/data/pokemon/charmander.png | Bin 0 -> 799 bytes
+ release/gui/data/pokemon/charmeleon.png | Bin 0 -> 1044 bytes
+ release/gui/data/pokemon/chikorita.png  | Bin 0 -> 692 bytes
+ release/gui/data/pokemon/chimecho.png   | Bin 0 -> 648 bytes
+ release/gui/data/pokemon/chinchou.png   | Bin 0 -> 805 bytes
+ release/gui/data/pokemon/clamperl.png   | Bin 0 -> 837 bytes
+ release/gui/data/pokemon/claydol.png    | Bin 0 -> 1013 bytes
+ release/gui/data/pokemon/clefable.png   | Bin 0 -> 897 bytes
+ release/gui/data/pokemon/clefairy.png   | Bin 0 -> 745 bytes
+ release/gui/data/pokemon/cleffa.png     | Bin 0 -> 557 bytes
+ release/gui/data/pokemon/cloyster.png   | Bin 0 -> 1164 bytes
+ release/gui/data/pokemon/combusken.png  | Bin 0 -> 1145 bytes
+ release/gui/data/pokemon/corphish.png   | Bin 0 -> 977 bytes
+ release/gui/data/pokemon/corsola.png    | Bin 0 -> 814 bytes
+ release/gui/data/pokemon/cradily.png    | Bin 0 -> 1165 bytes
+ release/gui/data/pokemon/crawdaunt.png  | Bin 0 -> 1384 bytes
+ release/gui/data/pokemon/crobat.png     | Bin 0 -> 1044 bytes
+ release/gui/data/pokemon/croconaw.png   | Bin 0 -> 993 bytes
+ release/gui/data/pokemon/cubone.png     | Bin 0 -> 824 bytes
+ release/gui/data/pokemon/cyndaquil.png  | Bin 0 -> 709 bytes
+ release/gui/data/pokemon/delcatty.png   | Bin 0 -> 1042 bytes
+ release/gui/data/pokemon/delibird.png   | Bin 0 -> 1037 bytes
+ release/gui/data/pokemon/dewgong.png    | Bin 0 -> 1006 bytes
+ release/gui/data/pokemon/diglett.png    | Bin 0 -> 575 bytes
+ release/gui/data/pokemon/ditto.png      | Bin 0 -> 510 bytes
+ release/gui/data/pokemon/dodrio.png     | Bin 0 -> 1465 bytes
+ release/gui/data/pokemon/doduo.png      | Bin 0 -> 1007 bytes
+ release/gui/data/pokemon/donphan.png    | Bin 0 -> 1196 bytes
+ release/gui/data/pokemon/dragonair.png  | Bin 0 -> 988 bytes
+ release/gui/data/pokemon/dragonite.png  | Bin 0 -> 1520 bytes
+ release/gui/data/pokemon/dratini.png    | Bin 0 -> 753 bytes
+ release/gui/data/pokemon/drowzee.png    | Bin 0 -> 959 bytes
+ release/gui/data/pokemon/dugtrio.png    | Bin 0 -> 822 bytes
+ release/gui/data/pokemon/dunsparce.png  | Bin 0 -> 854 bytes
+ release/gui/data/pokemon/dusclops.png   | Bin 0 -> 1020 bytes
+ release/gui/data/pokemon/duskull.png    | Bin 0 -> 791 bytes
+ release/gui/data/pokemon/dustox.png     | Bin 0 -> 954 bytes
+ release/gui/data/pokemon/eevee.png      | Bin 0 -> 785 bytes
+ release/gui/data/pokemon/ekans.png      | Bin 0 -> 840 bytes
+ release/gui/data/pokemon/electabuzz.png | Bin 0 -> 1270 bytes
+ release/gui/data/pokemon/electrike.png  | Bin 0 -> 701 bytes
+ release/gui/data/pokemon/electrode.png  | Bin 0 -> 659 bytes
+ release/gui/data/pokemon/elekid.png     | Bin 0 -> 887 bytes
+ release/gui/data/pokemon/entei.png      | Bin 0 -> 1742 bytes
+ release/gui/data/pokemon/espeon.png     | Bin 0 -> 894 bytes
+ release/gui/data/pokemon/exeggcute.png  | Bin 0 -> 1135 bytes
+ release/gui/data/pokemon/exeggutor.png  | Bin 0 -> 1359 bytes
+ release/gui/data/pokemon/exploud.png    | Bin 0 -> 1516 bytes
+ release/gui/data/pokemon/farfetch'd.png | Bin 0 -> 961 bytes
+ release/gui/data/pokemon/fearow.png     | Bin 0 -> 1285 bytes
+ release/gui/data/pokemon/feebas.png     | Bin 0 -> 745 bytes
+ release/gui/data/pokemon/feraligatr.png | Bin 0 -> 1487 bytes
+ release/gui/data/pokemon/flaaffy.png    | Bin 0 -> 905 bytes
+ release/gui/data/pokemon/flareon.png    | Bin 0 -> 957 bytes
+ release/gui/data/pokemon/flygon.png     | Bin 0 -> 1410 bytes
+ release/gui/data/pokemon/forretress.png | Bin 0 -> 1099 bytes
+ release/gui/data/pokemon/furret.png     | Bin 0 -> 897 bytes
+ release/gui/data/pokemon/gardevoir.png  | Bin 0 -> 1036 bytes
+ release/gui/data/pokemon/gastly.png     | Bin 0 -> 997 bytes
+ release/gui/data/pokemon/gengar.png     | Bin 0 -> 1008 bytes
+ release/gui/data/pokemon/geodude.png    | Bin 0 -> 674 bytes
+ release/gui/data/pokemon/girafarig.png  | Bin 0 -> 1174 bytes
+ release/gui/data/pokemon/glalie.png     | Bin 0 -> 1063 bytes
+ release/gui/data/pokemon/gligar.png     | Bin 0 -> 1217 bytes
+ release/gui/data/pokemon/gloom.png      | Bin 0 -> 963 bytes
+ release/gui/data/pokemon/golbat.png     | Bin 0 -> 1019 bytes
+ release/gui/data/pokemon/goldeen.png    | Bin 0 -> 979 bytes
+ release/gui/data/pokemon/golduck.png    | Bin 0 -> 1155 bytes
+ release/gui/data/pokemon/golem.png      | Bin 0 -> 1218 bytes
+ release/gui/data/pokemon/gorebyss.png   | Bin 0 -> 873 bytes
+ release/gui/data/pokemon/granbull.png   | Bin 0 -> 983 bytes
+ release/gui/data/pokemon/graveler.png   | Bin 0 -> 1137 bytes
+ release/gui/data/pokemon/grimer.png     | Bin 0 -> 878 bytes
+ release/gui/data/pokemon/groudon.png    | Bin 0 -> 1706 bytes
+ release/gui/data/pokemon/grovyle.png    | Bin 0 -> 1308 bytes
+ release/gui/data/pokemon/growlithe.png  | Bin 0 -> 979 bytes
+ release/gui/data/pokemon/grumpig.png    | Bin 0 -> 1111 bytes
+ release/gui/data/pokemon/gulpin.png     | Bin 0 -> 577 bytes
+ release/gui/data/pokemon/gyarados.png   | Bin 0 -> 1594 bytes
+ release/gui/data/pokemon/hariyama.png   | Bin 0 -> 1317 bytes
+ release/gui/data/pokemon/haunter.png    | Bin 0 -> 1101 bytes
+ release/gui/data/pokemon/heracross.png  | Bin 0 -> 1118 bytes
+ release/gui/data/pokemon/hitmonchan.png | Bin 0 -> 934 bytes
+ release/gui/data/pokemon/hitmonlee.png  | Bin 0 -> 1159 bytes
+ release/gui/data/pokemon/hitmontop.png  | Bin 0 -> 1030 bytes
+ release/gui/data/pokemon/ho-oh.png      | Bin 0 -> 1763 bytes
+ release/gui/data/pokemon/hoothoot.png   | Bin 0 -> 722 bytes
+ release/gui/data/pokemon/hoppip.png     | Bin 0 -> 767 bytes
+ release/gui/data/pokemon/horsea.png     | Bin 0 -> 688 bytes
+ release/gui/data/pokemon/houndoom.png   | Bin 0 -> 1133 bytes
+ release/gui/data/pokemon/houndour.png   | Bin 0 -> 806 bytes
+ release/gui/data/pokemon/huntail.png    | Bin 0 -> 1105 bytes
+ release/gui/data/pokemon/hypno.png      | Bin 0 -> 1145 bytes
+ release/gui/data/pokemon/igglybuff.png  | Bin 0 -> 532 bytes
+ release/gui/data/pokemon/illumise.png   | Bin 0 -> 1006 bytes
+ release/gui/data/pokemon/ivysaur.png    | Bin 0 -> 1010 bytes
+ release/gui/data/pokemon/jigglypuff.png | Bin 0 -> 699 bytes
+ release/gui/data/pokemon/jirachi.png    | Bin 0 -> 863 bytes
+ release/gui/data/pokemon/jolteon.png    | Bin 0 -> 1100 bytes
+ release/gui/data/pokemon/jumpluff.png   | Bin 0 -> 932 bytes
+ release/gui/data/pokemon/jynx.png       | Bin 0 -> 1362 bytes
+ release/gui/data/pokemon/kabuto.png     | Bin 0 -> 619 bytes
+ release/gui/data/pokemon/kabutops.png   | Bin 0 -> 1108 bytes
+ release/gui/data/pokemon/kadabra.png    | Bin 0 -> 1287 bytes
+ release/gui/data/pokemon/kakuna.png     | Bin 0 -> 621 bytes
+ release/gui/data/pokemon/kangaskhan.png | Bin 0 -> 1384 bytes
+ release/gui/data/pokemon/kecleon.png    | Bin 0 -> 1036 bytes
+ release/gui/data/pokemon/kingdra.png    | Bin 0 -> 1190 bytes
+ release/gui/data/pokemon/kingler.png    | Bin 0 -> 1452 bytes
+ release/gui/data/pokemon/kirlia.png     | Bin 0 -> 850 bytes
+ release/gui/data/pokemon/koffing.png    | Bin 0 -> 906 bytes
+ release/gui/data/pokemon/krabby.png     | Bin 0 -> 800 bytes
+ release/gui/data/pokemon/kyogre.png     | Bin 0 -> 1298 bytes
+ release/gui/data/pokemon/lairon.png     | Bin 0 -> 1090 bytes
+ release/gui/data/pokemon/lanturn.png    | Bin 0 -> 989 bytes
+ release/gui/data/pokemon/lapras.png     | Bin 0 -> 1055 bytes
+ release/gui/data/pokemon/larvitar.png   | Bin 0 -> 684 bytes
+ release/gui/data/pokemon/latias.png     | Bin 0 -> 1171 bytes
+ release/gui/data/pokemon/latios.png     | Bin 0 -> 1270 bytes
+ release/gui/data/pokemon/ledian.png     | Bin 0 -> 1049 bytes
+ release/gui/data/pokemon/ledyba.png     | Bin 0 -> 882 bytes
+ release/gui/data/pokemon/lickitung.png  | Bin 0 -> 1034 bytes
+ release/gui/data/pokemon/lileep.png     | Bin 0 -> 924 bytes
+ release/gui/data/pokemon/linoone.png    | Bin 0 -> 931 bytes
+ release/gui/data/pokemon/lombre.png     | Bin 0 -> 843 bytes
+ release/gui/data/pokemon/lotad.png      | Bin 0 -> 682 bytes
+ release/gui/data/pokemon/loudred.png    | Bin 0 -> 1251 bytes
+ release/gui/data/pokemon/ludicolo.png   | Bin 0 -> 1333 bytes
+ release/gui/data/pokemon/lugia.png      | Bin 0 -> 1305 bytes
+ release/gui/data/pokemon/lunatone.png   | Bin 0 -> 893 bytes
+ release/gui/data/pokemon/luvdisc.png    | Bin 0 -> 452 bytes
+ release/gui/data/pokemon/machamp.png    | Bin 0 -> 1494 bytes
+ release/gui/data/pokemon/machoke.png    | Bin 0 -> 1078 bytes
+ release/gui/data/pokemon/machop.png     | Bin 0 -> 744 bytes
+ release/gui/data/pokemon/magby.png      | Bin 0 -> 726 bytes
+ release/gui/data/pokemon/magcargo.png   | Bin 0 -> 986 bytes
+ release/gui/data/pokemon/magikarp.png   | Bin 0 -> 990 bytes
+ release/gui/data/pokemon/magmar.png     | Bin 0 -> 1382 bytes
+ release/gui/data/pokemon/magnemite.png  | Bin 0 -> 565 bytes
+ release/gui/data/pokemon/magneton.png   | Bin 0 -> 1168 bytes
+ release/gui/data/pokemon/makuhita.png   | Bin 0 -> 855 bytes
+ release/gui/data/pokemon/manectric.png  | Bin 0 -> 937 bytes
+ release/gui/data/pokemon/mankey.png     | Bin 0 -> 942 bytes
+ release/gui/data/pokemon/mantine.png    | Bin 0 -> 1276 bytes
+ release/gui/data/pokemon/mareep.png     | Bin 0 -> 810 bytes
+ release/gui/data/pokemon/marill.png     | Bin 0 -> 776 bytes
+ release/gui/data/pokemon/marowak.png    | Bin 0 -> 1018 bytes
+ release/gui/data/pokemon/marshtomp.png  | Bin 0 -> 995 bytes
+ release/gui/data/pokemon/masquerain.png | Bin 0 -> 1012 bytes
+ release/gui/data/pokemon/mawile.png     | Bin 0 -> 1033 bytes
+ release/gui/data/pokemon/medicham.png   | Bin 0 -> 964 bytes
+ release/gui/data/pokemon/meditite.png   | Bin 0 -> 763 bytes
+ release/gui/data/pokemon/meganium.png   | Bin 0 -> 1446 bytes
+ release/gui/data/pokemon/meowth.png     | Bin 0 -> 882 bytes
+ release/gui/data/pokemon/metagross.png  | Bin 0 -> 1227 bytes
+ release/gui/data/pokemon/metang.png     | Bin 0 -> 1229 bytes
+ release/gui/data/pokemon/metapod.png    | Bin 0 -> 569 bytes
+ release/gui/data/pokemon/mew.png        | Bin 0 -> 736 bytes
+ release/gui/data/pokemon/mewtwo.png     | Bin 0 -> 1175 bytes
+ release/gui/data/pokemon/mightyena.png  | Bin 0 -> 1201 bytes
+ release/gui/data/pokemon/milotic.png    | Bin 0 -> 1281 bytes
+ release/gui/data/pokemon/miltank.png    | Bin 0 -> 1062 bytes
+ release/gui/data/pokemon/minun.png      | Bin 0 -> 695 bytes
+ release/gui/data/pokemon/misdreavus.png | Bin 0 -> 820 bytes
+ release/gui/data/pokemon/moltres.png    | Bin 0 -> 1613 bytes
+ release/gui/data/pokemon/mr.mime.png    | Bin 0 -> 1138 bytes
+ release/gui/data/pokemon/mudkip.png     | Bin 0 -> 750 bytes
+ release/gui/data/pokemon/muk.png        | Bin 0 -> 1159 bytes
+ release/gui/data/pokemon/murkrow.png    | Bin 0 -> 856 bytes
+ release/gui/data/pokemon/natu.png       | Bin 0 -> 548 bytes
+ release/gui/data/pokemon/nidoking.png   | Bin 0 -> 1386 bytes
+ release/gui/data/pokemon/nidoqueen.png  | Bin 0 -> 1260 bytes
+ release/gui/data/pokemon/nidoran.png    | Bin 0 -> 792 bytes
+ release/gui/data/pokemon/nidorina.png   | Bin 0 -> 935 bytes
+ release/gui/data/pokemon/nidorino.png   | Bin 0 -> 1035 bytes
+ release/gui/data/pokemon/nincada.png    | Bin 0 -> 804 bytes
+ release/gui/data/pokemon/ninetales.png  | Bin 0 -> 1165 bytes
+ release/gui/data/pokemon/ninjask.png    | Bin 0 -> 999 bytes
+ release/gui/data/pokemon/noctowl.png    | Bin 0 -> 994 bytes
+ release/gui/data/pokemon/nosepass.png   | Bin 0 -> 762 bytes
+ release/gui/data/pokemon/numel.png      | Bin 0 -> 783 bytes
+ release/gui/data/pokemon/nuzleaf.png    | Bin 0 -> 836 bytes
+ release/gui/data/pokemon/octillery.png  | Bin 0 -> 893 bytes
+ release/gui/data/pokemon/oddish.png     | Bin 0 -> 619 bytes
+ release/gui/data/pokemon/omanyte.png    | Bin 0 -> 751 bytes
+ release/gui/data/pokemon/omastar.png    | Bin 0 -> 1081 bytes
+ release/gui/data/pokemon/onix.png       | Bin 0 -> 1203 bytes
+ release/gui/data/pokemon/paras.png      | Bin 0 -> 719 bytes
+ release/gui/data/pokemon/parasect.png   | Bin 0 -> 981 bytes
+ release/gui/data/pokemon/pelipper.png   | Bin 0 -> 1025 bytes
+ release/gui/data/pokemon/persian.png    | Bin 0 -> 1061 bytes
+ release/gui/data/pokemon/phanpy.png     | Bin 0 -> 644 bytes
+ release/gui/data/pokemon/pichu.png      | Bin 0 -> 606 bytes
+ release/gui/data/pokemon/pidgeot.png    | Bin 0 -> 1431 bytes
+ release/gui/data/pokemon/pidgeotto.png  | Bin 0 -> 966 bytes
+ release/gui/data/pokemon/pidgey.png     | Bin 0 -> 909 bytes
+ release/gui/data/pokemon/pikachu.png    | Bin 0 -> 807 bytes
+ release/gui/data/pokemon/piloswine.png  | Bin 0 -> 869 bytes
+ release/gui/data/pokemon/pineco.png     | Bin 0 -> 882 bytes
+ release/gui/data/pokemon/pinsir.png     | Bin 0 -> 1147 bytes
+ release/gui/data/pokemon/plusle.png     | Bin 0 -> 737 bytes
+ release/gui/data/pokemon/politoed.png   | Bin 0 -> 953 bytes
+ release/gui/data/pokemon/poliwag.png    | Bin 0 -> 700 bytes
+ release/gui/data/pokemon/poliwhirl.png  | Bin 0 -> 971 bytes
+ release/gui/data/pokemon/poliwrath.png  | Bin 0 -> 989 bytes
+ release/gui/data/pokemon/ponyta.png     | Bin 0 -> 1113 bytes
+ release/gui/data/pokemon/poochyena.png  | Bin 0 -> 829 bytes
+ release/gui/data/pokemon/porygon.png    | Bin 0 -> 748 bytes
+ release/gui/data/pokemon/porygon2.png   | Bin 0 -> 749 bytes
+ release/gui/data/pokemon/primeape.png   | Bin 0 -> 1086 bytes
+ release/gui/data/pokemon/psyduck.png    | Bin 0 -> 786 bytes
+ release/gui/data/pokemon/pupitar.png    | Bin 0 -> 818 bytes
+ release/gui/data/pokemon/quagsire.png   | Bin 0 -> 969 bytes
+ release/gui/data/pokemon/quilava.png    | Bin 0 -> 887 bytes
+ release/gui/data/pokemon/qwilfish.png   | Bin 0 -> 770 bytes
+ release/gui/data/pokemon/raichu.png     | Bin 0 -> 1137 bytes
+ release/gui/data/pokemon/raikou.png     | Bin 0 -> 1531 bytes
+ release/gui/data/pokemon/ralts.png      | Bin 0 -> 597 bytes
+ release/gui/data/pokemon/rapidash.png   | Bin 0 -> 1309 bytes
+ release/gui/data/pokemon/raticate.png   | Bin 0 -> 1036 bytes
+ release/gui/data/pokemon/rattata.png    | Bin 0 -> 697 bytes
+ release/gui/data/pokemon/rayquaza.png   | Bin 0 -> 1413 bytes
+ release/gui/data/pokemon/regice.png     | Bin 0 -> 1178 bytes
+ release/gui/data/pokemon/regirock.png   | Bin 0 -> 1293 bytes
+ release/gui/data/pokemon/registeel.png  | Bin 0 -> 1230 bytes
+ release/gui/data/pokemon/relicanth.png  | Bin 0 -> 1008 bytes
+ release/gui/data/pokemon/remoraid.png   | Bin 0 -> 675 bytes
+ release/gui/data/pokemon/rhydon.png     | Bin 0 -> 1385 bytes
+ release/gui/data/pokemon/rhyhorn.png    | Bin 0 -> 1076 bytes
+ release/gui/data/pokemon/roselia.png    | Bin 0 -> 996 bytes
+ release/gui/data/pokemon/sableye.png    | Bin 0 -> 858 bytes
+ release/gui/data/pokemon/salamence.png  | Bin 0 -> 1222 bytes
+ release/gui/data/pokemon/sandshrew.png  | Bin 0 -> 825 bytes
+ release/gui/data/pokemon/sandslash.png  | Bin 0 -> 1134 bytes
+ release/gui/data/pokemon/sceptile.png   | Bin 0 -> 1464 bytes
+ release/gui/data/pokemon/scizor.png     | Bin 0 -> 1358 bytes
+ release/gui/data/pokemon/scyther.png    | Bin 0 -> 1316 bytes
+ release/gui/data/pokemon/seadra.png     | Bin 0 -> 1037 bytes
+ release/gui/data/pokemon/seaking.png    | Bin 0 -> 1307 bytes
+ release/gui/data/pokemon/sealeo.png     | Bin 0 -> 979 bytes
+ release/gui/data/pokemon/seedot.png     | Bin 0 -> 672 bytes
+ release/gui/data/pokemon/seel.png       | Bin 0 -> 900 bytes
+ release/gui/data/pokemon/sentret.png    | Bin 0 -> 813 bytes
+ release/gui/data/pokemon/seviper.png    | Bin 0 -> 1180 bytes
+ release/gui/data/pokemon/sharpedo.png   | Bin 0 -> 1026 bytes
+ release/gui/data/pokemon/shedinja.png   | Bin 0 -> 882 bytes
+ release/gui/data/pokemon/shelgon.png    | Bin 0 -> 836 bytes
+ release/gui/data/pokemon/shellder.png   | Bin 0 -> 658 bytes
+ release/gui/data/pokemon/shiftry.png    | Bin 0 -> 1299 bytes
+ release/gui/data/pokemon/shroomish.png  | Bin 0 -> 665 bytes
+ release/gui/data/pokemon/shuckle.png    | Bin 0 -> 788 bytes
+ release/gui/data/pokemon/shuppet.png    | Bin 0 -> 588 bytes
+ release/gui/data/pokemon/silcoon.png    | Bin 0 -> 726 bytes
+ release/gui/data/pokemon/skarmory.png   | Bin 0 -> 1368 bytes
+ release/gui/data/pokemon/skiploom.png   | Bin 0 -> 688 bytes
+ release/gui/data/pokemon/skitty.png     | Bin 0 -> 892 bytes
+ release/gui/data/pokemon/slaking.png    | Bin 0 -> 1362 bytes
+ release/gui/data/pokemon/slakoth.png    | Bin 0 -> 822 bytes
+ release/gui/data/pokemon/slowbro.png    | Bin 0 -> 1326 bytes
+ release/gui/data/pokemon/slowking.png   | Bin 0 -> 1056 bytes
+ release/gui/data/pokemon/slowpoke.png   | Bin 0 -> 829 bytes
+ release/gui/data/pokemon/slugma.png     | Bin 0 -> 730 bytes
+ release/gui/data/pokemon/smeargle.png   | Bin 0 -> 1028 bytes
+ release/gui/data/pokemon/smoochum.png   | Bin 0 -> 688 bytes
+ release/gui/data/pokemon/sneasel.png    | Bin 0 -> 969 bytes
+ release/gui/data/pokemon/snorlax.png    | Bin 0 -> 1152 bytes
+ release/gui/data/pokemon/snorunt.png    | Bin 0 -> 770 bytes
+ release/gui/data/pokemon/snubbull.png   | Bin 0 -> 814 bytes
+ release/gui/data/pokemon/solrock.png    | Bin 0 -> 1282 bytes
+ release/gui/data/pokemon/spearow.png    | Bin 0 -> 783 bytes
+ release/gui/data/pokemon/spheal.png     | Bin 0 -> 709 bytes
+ release/gui/data/pokemon/spinarak.png   | Bin 0 -> 733 bytes
+ release/gui/data/pokemon/spinda.png     | Bin 0 -> 609 bytes
+ release/gui/data/pokemon/spoink.png     | Bin 0 -> 662 bytes
+ release/gui/data/pokemon/squirtle.png   | Bin 0 -> 819 bytes
+ release/gui/data/pokemon/stantler.png   | Bin 0 -> 1186 bytes
+ release/gui/data/pokemon/starmie.png    | Bin 0 -> 1135 bytes
+ release/gui/data/pokemon/staryu.png     | Bin 0 -> 845 bytes
+ release/gui/data/pokemon/steelix.png    | Bin 0 -> 1253 bytes
+ release/gui/data/pokemon/sudowoodo.png  | Bin 0 -> 880 bytes
+ release/gui/data/pokemon/suicune.png    | Bin 0 -> 1525 bytes
+ release/gui/data/pokemon/sunflora.png   | Bin 0 -> 962 bytes
+ release/gui/data/pokemon/sunkern.png    | Bin 0 -> 627 bytes
+ release/gui/data/pokemon/surskit.png    | Bin 0 -> 583 bytes
+ release/gui/data/pokemon/swablu.png     | Bin 0 -> 788 bytes
+ release/gui/data/pokemon/swalot.png     | Bin 0 -> 878 bytes
+ release/gui/data/pokemon/swampert.png   | Bin 0 -> 1507 bytes
+ release/gui/data/pokemon/swellow.png    | Bin 0 -> 1095 bytes
+ release/gui/data/pokemon/swinub.png     | Bin 0 -> 532 bytes
+ release/gui/data/pokemon/taillow.png    | Bin 0 -> 713 bytes
+ release/gui/data/pokemon/tangela.png    | Bin 0 -> 1042 bytes
+ release/gui/data/pokemon/tauros.png     | Bin 0 -> 1349 bytes
+ release/gui/data/pokemon/teddiursa.png  | Bin 0 -> 693 bytes
+ release/gui/data/pokemon/tentacool.png  | Bin 0 -> 765 bytes
+ release/gui/data/pokemon/tentacruel.png | Bin 0 -> 1278 bytes
+ release/gui/data/pokemon/togepi.png     | Bin 0 -> 537 bytes
+ release/gui/data/pokemon/togetic.png    | Bin 0 -> 742 bytes
+ release/gui/data/pokemon/torchic.png    | Bin 0 -> 733 bytes
+ release/gui/data/pokemon/torkoal.png    | Bin 0 -> 1273 bytes
+ release/gui/data/pokemon/totodile.png   | Bin 0 -> 787 bytes
+ release/gui/data/pokemon/trapinch.png   | Bin 0 -> 597 bytes
+ release/gui/data/pokemon/treecko.png    | Bin 0 -> 882 bytes
+ release/gui/data/pokemon/tropius.png    | Bin 0 -> 1554 bytes
+ release/gui/data/pokemon/typhlosion.png | Bin 0 -> 1121 bytes
+ release/gui/data/pokemon/tyranitar.png  | Bin 0 -> 1490 bytes
+ release/gui/data/pokemon/tyrogue.png    | Bin 0 -> 756 bytes
+ release/gui/data/pokemon/umbreon.png    | Bin 0 -> 889 bytes
+ release/gui/data/pokemon/unown.png      | Bin 0 -> 300 bytes
+ release/gui/data/pokemon/ursaring.png   | Bin 0 -> 1213 bytes
+ release/gui/data/pokemon/vaporeon.png   | Bin 0 -> 1102 bytes
+ release/gui/data/pokemon/venomoth.png   | Bin 0 -> 1307 bytes
+ release/gui/data/pokemon/venonat.png    | Bin 0 -> 979 bytes
+ release/gui/data/pokemon/venusaur.png   | Bin 0 -> 1556 bytes
+ release/gui/data/pokemon/vibrava.png    | Bin 0 -> 948 bytes
+ release/gui/data/pokemon/victreebel.png | Bin 0 -> 1156 bytes
+ release/gui/data/pokemon/vigoroth.png   | Bin 0 -> 1197 bytes
+ release/gui/data/pokemon/vileplume.png  | Bin 0 -> 988 bytes
+ release/gui/data/pokemon/volbeat.png    | Bin 0 -> 1039 bytes
+ release/gui/data/pokemon/voltorb.png    | Bin 0 -> 539 bytes
+ release/gui/data/pokemon/vulpix.png     | Bin 0 -> 966 bytes
+ release/gui/data/pokemon/wailmer.png    | Bin 0 -> 808 bytes
+ release/gui/data/pokemon/wailord.png    | Bin 0 -> 1003 bytes
+ release/gui/data/pokemon/walrein.png    | Bin 0 -> 1325 bytes
+ release/gui/data/pokemon/wartortle.png  | Bin 0 -> 1061 bytes
+ release/gui/data/pokemon/weedle.png     | Bin 0 -> 655 bytes
+ release/gui/data/pokemon/weepinbell.png | Bin 0 -> 872 bytes
+ release/gui/data/pokemon/weezing.png    | Bin 0 -> 1329 bytes
+ release/gui/data/pokemon/whiscash.png   | Bin 0 -> 972 bytes
+ release/gui/data/pokemon/whismur.png    | Bin 0 -> 703 bytes
+ release/gui/data/pokemon/wigglytuff.png | Bin 0 -> 972 bytes
+ release/gui/data/pokemon/wingull.png    | Bin 0 -> 662 bytes
+ release/gui/data/pokemon/wobbuffet.png  | Bin 0 -> 911 bytes
+ release/gui/data/pokemon/wooper.png     | Bin 0 -> 641 bytes
+ release/gui/data/pokemon/wurmple.png    | Bin 0 -> 718 bytes
+ release/gui/data/pokemon/wynaut.png     | Bin 0 -> 724 bytes
+ release/gui/data/pokemon/xatu.png       | Bin 0 -> 830 bytes
+ release/gui/data/pokemon/yanma.png      | Bin 0 -> 996 bytes
+ release/gui/data/pokemon/zangoose.png   | Bin 0 -> 1170 bytes
+ release/gui/data/pokemon/zapdos.png     | Bin 0 -> 1256 bytes
+ release/gui/data/pokemon/zigzagoon.png  | Bin 0 -> 1087 bytes
+ release/gui/data/pokemon/zubat.png      | Bin 0 -> 831 bytes
+ release/gui/gui_client.jar              | Bin 0 -> 24040 bytes
+ release/shared/connection.ml            |  75 ++++++
+ release/shared/connection.mli           |  33 +++
+ release/shared/constants.ml             |  86 +++++++
+ release/shared/definitions.ml           | 231 +++++++++++++++++++
+ release/shared/thread_pool.ml           | 110 +++++++++
+ release/shared/thread_pool.mli          |  22 ++
+ release/shared/util.ml                  | 344 ++++++++++++++++++++++++++++
+ release/shared/util.mli                 |  96 ++++++++
+ release/team/babybot.ml                 |  57 +++++
+ release/team/build_team.sh              |  11 +
+ release/team/team.ml                    | 130 +++++++++++
+ 410 files changed, 2551 insertions(+)
+
+commit b5f5d0174c175341baad7b8b03937dbec1782686
+Author: Peter Stromhaug <pas282@cornell.edu>
+Date:   Sat Nov 22 10:35:33 2014 -0500
+
+    Initial commit
+
+ README.md | 4 ++++
+ 1 file changed, 4 insertions(+)
