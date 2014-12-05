@@ -4,27 +4,39 @@ open Constants
 open Netgraphics
 open State
 
-(* You have to implement this. Change it from int to yout own state type*)
+(* Current state of game (defined in state.ml) and game status data *)
 type game = State.t * game_status_data
+
+let _ = Random.self_init ()
 
 let game_datafication g = snd g
 	
 let game_from_data game_data = (!(State.state), game_data)
 
+(* Finds cheapest steammon in a steammon list 
+ * Requires : steammon list
+ * Returns : cheapest steammon *)
 let find_cheapest (lst : steammon list) : steammon =
   let first = begin match lst with 
     | [] -> failwith "Find cheapest list error"
     | h::_ -> h end in
   List.fold_left (fun a x -> if x.cost < a.cost then x else a) first lst
 
+(* Finds steammon with most hp in a list of steammon 
+ * Requires : steammon list
+ * Returns : steammon *)
 let find_awake (lst : steammon list) : steammon = 
   let first = begin match lst with
     | [] -> failwith "Find awake list error"
     | h::_ -> h end in
   List.fold_left (fun a x -> if x.curr_hp > a.curr_hp then x else a) first lst
 
+(* game status data without number of credits*)
 type status_data = (steammon list * inventory) * (steammon list * inventory)
 
+(* Determines all initial effects, sends gui updates, and updates status data
+ * Requires : status data
+ * Returns : status data*)
 let initial_effects (sd : status_data) : status_data =
   let r_sl = fst (fst sd) in
   let b_sl = fst (snd sd) in
@@ -62,6 +74,10 @@ let initial_effects (sd : status_data) : status_data =
   let b_sl = (mod_status bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) end
 
+(* Determines which steammon attacks first by speed and speed modifiers. Also
+ * sends GUI updates
+ * Requires : status data and 2 commands
+ * Returns : pair of pair of team color and command, first pair happens first*)
 let determine_order (sd : status_data) (r_act : command) (b_act : command) : 
     (color * command) * (color * command) =
   match (fst (fst sd), fst (snd sd)) with
@@ -86,6 +102,10 @@ let determine_order (sd : status_data) (r_act : command) (b_act : command) :
   else (add_update (SetFirstAttacker Blue); 
        ((Blue, b_act), (Red, r_act)))
 
+(* Decrements pp of all moves of a certain name by 1 when used. Also sends GUI
+ * updates
+ * Requires : status data, move to decrement pp of, color of team using 
+ * Returns : status data*)
 let dec_pp (sd : status_data) (mov : move) (col : color) : status_data =
         if mov.name = "Struggle" then sd else
         let data = match col with
@@ -124,6 +144,10 @@ let dec_pp (sd : status_data) (mov : move) (col : color) : status_data =
         | Red -> ((s::st, snd (fst sd)), snd sd)
         | Blue -> (fst sd, ((s::st), snd (snd sd)))
 
+(* finds target of a move, taking into account accuracy and the fact that a
+ * confused steammon may attack itself
+ * Requires : move and status option of attacking steammon
+ * Returns : target *)
 let find_target (mov : move) (sts : status option) : target =
   match (mov.target, sts) with
   | (User, _) -> User
@@ -132,6 +156,12 @@ let find_target (mov : move) (sts : status option) : target =
                                  else Opponent
   | (Opponent, _) -> Opponent
 
+(* Fold function for folding over list of effects in a move and applying
+ * effects to a target
+ * Requires : color, target of move, pair of status data and list of
+ * effect_result and color pairs, and a particular effect
+ * Returns : pair of status data and list of effect_results and color pairs,
+ * updated *)
 let fold_effects (col : color) (targ : target) 
     ((a, b) : status_data * (effect_result * color) list) (x : effect) : 
     status_data * (effect_result * color) list =
@@ -333,6 +363,9 @@ let fold_effects (col : color) (targ : target)
    | (Red, User) -> (((dh::dt, snd (fst a)), snd a), 
                                ((RestoredPP i), Red)::b) end
 
+(* Returns true if a move will occur
+ * Requires : move and target
+ * Returns : bool *)
 let move_occurs (mov : move) (targ : target) : bool =
         match targ with
         | User -> true
@@ -341,6 +374,9 @@ let move_occurs (mov : move) (targ : target) : bool =
 let dmg_ref = ref 0
 let efft_ref = ref Ineffective
 
+(* updates status data and sends gui updates after executing a steammon's move
+ * Requires : status data, move, color, and target 
+ * Returns : status data, updated*)
 let do_move (sd : status_data) (mov : move) (col : color) (targ : target) : 
     status_data = 
   let (r_sl, b_sl) = (fst (fst sd), fst (snd sd)) in
@@ -394,6 +430,10 @@ let do_move (sd : status_data) (mov : move) (col : color) (targ : target) :
            | (Blue, Opponent) ->  ((def'::rt, snd (fst sd)), snd sd) in
       sd
 
+(* updates status data and sends gui updates after steammon action (switch,
+ * use item, or move)
+ * Requires : status data, color, command 
+ * Returns : status data *)
 let do_action (sd : status_data) (col : color) (act : command) : status_data =
   let sl = match col with
            | Red -> fst (fst sd)
@@ -671,9 +711,20 @@ let do_action (sd : status_data) (col : color) (act : command) : status_data =
                              hit = Miss; effectiveness = Ineffective;
                              effects = []});
                     sd) in
+      let steam_list = begin match def_col with
+                        | Red -> (fst (fst sd))
+                        | Blue -> (fst (snd sd)) end in
+      let steam = begin match steam_list with
+                    | [] -> failwith "error in sending update"
+                    | h::_ -> h end in
+      add_update (UpdateSteammon (steam.species, steam.curr_hp, steam.max_hp, 
+                                                                    def_col));
       (dec_pp sd mov col) end
   | _ -> sd
 
+(* updates steammon and sends gui updates after results of inflicted statuses
+ * requires : status data
+ * Returns : updated status data *)
 let after_effects (sd : status_data) : status_data =
   let r_sl = fst (fst sd) in
   let b_sl = fst (snd sd) in
@@ -709,6 +760,10 @@ let after_effects (sd : status_data) : status_data =
   let b_sl = (mod_hp bh Blue) :: bt in
   ((r_sl, snd(fst sd)),(b_sl, snd(snd sd))) 
 
+(* Walks through battle state, updating gui and game status data after
+ * initial effects, first move, second move, and after effects
+ * Requires : game status data, 2 commands 
+ * Returns : updated game status data *)
 let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) : 
     game_status_data =
   let ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred)) = gsd in
@@ -721,6 +776,10 @@ let do_battle (gsd : game_status_data) (r_act : command) (b_act : command) :
   let ((r_sl, r_inv), (b_sl, b_inv)) = sd in
   ((r_sl, r_inv, r_cred), (b_sl, b_inv, b_cred))
 
+(* Determines the next game status data depending on the state of the game and
+ * the two commands received 
+ * Requires : game, 2 commands 
+ * Returns : game status data, updated*)
 let find_next_data (g : game) (ra : command) (ba : command) : 
     game_status_data =
   let curr_data = snd g in
@@ -845,10 +904,12 @@ let find_next_data (g : game) (ra : command) (ba : command) :
                                            else a) (find_awake r_sl) r_sl in
       let r_start'' = if r_start'.curr_hp = 0 then find_awake r_sl
                       else r_start' in
+      add_update (SetChosenSteammon r_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       ((r_sl', r_inv, r_cred), bdata)
   | (Faint Red, (_, _)) ->
       let r_start'' = find_awake r_sl in
+      add_update (SetChosenSteammon r_start''.species);
       let r_sl' = r_start'' :: (List.filter ((<>) r_start'') r_sl) in
       ((r_sl', r_inv, r_cred), bdata)
   | (Faint Blue, (_, Action (SelectStarter b_start))) -> 
@@ -856,10 +917,12 @@ let find_next_data (g : game) (ra : command) (ba : command) :
                                            else a) (find_awake b_sl) b_sl in
       let b_start'' = if b_start'.curr_hp = 0 then find_awake b_sl
                       else b_start' in
+      add_update (SetChosenSteammon b_start''.species);
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       (rdata, (b_sl', b_inv, b_cred))
   | (Faint Blue, (_, _)) ->
       let b_start'' = find_awake b_sl in
+      add_update (SetChosenSteammon b_start''.species);
       let b_sl' = b_start'' :: (List.filter ((<>) b_start'') b_sl) in
       (rdata, (b_sl', b_inv, b_cred))
   | (Win Red, _)
